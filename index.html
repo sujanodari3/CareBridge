@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CareBridge Demo – Care Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDMincho:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  color-scheme:light;
+  /* CareBridge tokens — indigo (藍) of care uniforms, vermilion (朱) of hanko */
+  --ai:#233A66; --ai-2:#E8EDF5; --ai-3:#3A5486;
+  --bg:#F2F4F7; --panel:#fff; --ink:#22262E; --muted:#5E6673;
+  --line:#D3D9E1; --rule:#C3CAD4; --head:#E6EAF0; --band:#F4F6F9;
+  --shu:#C23B22; --shu-bg:#FBECE8; --warn:#9A620F; --warn-bg:#FBF3E4; --ok:#2F6B45; --ok-bg:#E7F1EA;
+  --brand:var(--ai); --brand-2:var(--ai-2); --bad:var(--shu); --bad-bg:var(--shu-bg);
+  --sans:"BIZ UDPGothic","Hiragino Sans","Yu Gothic",system-ui,sans-serif; --mincho:"BIZ UDMincho","Yu Mincho",serif;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55;font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+.svg-inline--fa{vertical-align:-.125em}
+/* top bar */
+header.top{display:flex;align-items:center;gap:16px;height:52px;padding-right:18px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:6}
+.brand{display:flex;align-items:center;gap:11px;width:220px;height:100%;padding:0 20px;background:var(--ai);color:#fff;flex-shrink:0}
+.brand .svg-inline--fa{font-size:20px;color:#fff}
+.brand b{display:block;font-size:16px;line-height:1.1}
+.brand small{display:block;font-size:11px;color:#B8C4DA}
+.facility{font-size:13px;color:var(--muted);white-space:nowrap}
+.facility b{color:var(--ink);margin-right:10px}
+.demo{font-size:11px;border:1px solid var(--rule);border-radius:2px;padding:1px 6px;color:var(--muted);margin-left:10px}
+header .sp{flex:1}
+.shift{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 12px;border:1px solid var(--line);border-radius:3px;background:var(--band);white-space:nowrap}
+.shift .svg-inline--fa{color:var(--ai)}
+.shift b{font-size:15px}
+.lang{display:flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.lang button{background:#fff;color:var(--ink);border:0;padding:6px 11px;cursor:pointer;font:inherit;font-size:12px}
+.lang button.on{background:var(--ai);color:#fff;font-weight:700}
+/* binder spine navigation */
+.wrap{display:flex;min-height:calc(100vh - 52px)}
+nav{width:220px;background:var(--ai);padding:6px 0 24px;flex-shrink:0;position:sticky;top:52px;height:calc(100vh - 52px);overflow:auto}
+nav .grp{font-size:11.5px;color:#93A5C4;padding:16px 20px 4px}
+nav button{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:0;border-left:3px solid transparent;padding:8px 17px;cursor:pointer;font:inherit;font-size:13.5px;color:#E3E8F1}
+nav button:hover{background:rgba(255,255,255,.07)}
+nav button.on{background:var(--bg);color:var(--ai);border-left-color:var(--shu);font-weight:700}
+nav .ic{width:18px;text-align:center;flex-shrink:0}
+main{flex:1;padding:22px 28px 48px;min-width:0}
+h2{margin:0 0 2px;font-size:22px;font-weight:700}
+.desc{color:var(--muted);margin:0 0 16px;max-width:76ch}
+.grid{display:grid;gap:14px}
+.g6{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(360px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:2px;padding:14px 16px;min-width:0}
+.card h3{margin:0 0 10px;font-size:15px}
+.card h3 .svg-inline--fa{color:var(--muted);margin-right:4px}
+.card-h{display:flex;justify-content:space-between;align-items:start;gap:8px}
+.card-h h3{margin-bottom:2px}
+.card-h .s{color:var(--muted);font-size:12px;margin-bottom:8px}
+/* summary figures sit in one divided strip, like the totals row of a form */
+.grid:has(>.stat){display:flex;flex-wrap:wrap;gap:0;background:#fff;border:1px solid var(--line);border-radius:2px}
+.grid>.card.stat{flex:1 1 150px;border:0;border-right:1px solid var(--line);border-radius:0;padding:12px 18px}
+.grid>.card.stat:last-child{border-right:0}
+.stat .n{font-size:26px;font-weight:700;line-height:1.25}
+.stat .l{color:var(--muted);font-size:12px}
+.stat .d{font-size:12px;margin-top:2px;color:var(--muted)}
+.d.up{color:var(--ok)} .d.down{color:var(--shu)}
+.chartbox{position:relative;height:260px}
+.chartbox.tall{height:320px}
+.chartbox.xtall{height:560px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:700;background:var(--band);white-space:nowrap}
+td.num,th.num{text-align:right}
+.tag{display:inline-block;padding:1px 7px;border-radius:2px;font-size:11.5px;background:var(--ai-2);color:var(--ai);white-space:nowrap;border:1px solid transparent}
+.tag.warn{background:var(--warn-bg);color:var(--warn)}
+.tag.bad{background:var(--shu-bg);color:var(--shu);border-color:#F0C6BD}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}
+.tag.gray{background:#EEF0F3;color:var(--muted)}
+.tdot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+form .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:10px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+input,select,textarea{width:100%;padding:7px 9px;border:1px solid var(--rule);border-radius:3px;font:inherit;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ai-2);border-color:var(--ai)}
+textarea{min-height:60px;resize:vertical}
+.btn{display:inline-flex;align-items:center;gap:7px;background:var(--ai);color:#fff;border:1px solid var(--ai);border-radius:3px;padding:7px 14px;cursor:pointer;font:inherit;font-weight:700;white-space:nowrap}
+.btn:hover{background:var(--ai-3)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.ghost{background:#fff;color:var(--ai);border-color:var(--rule)}
+.btn.ghost:hover{border-color:var(--ai)}
+.btn.sm{padding:3px 9px;font-size:12px;font-weight:400}
+.btn.danger{background:#fff;color:var(--shu);border-color:#E7B8AE}
+.btn.link{background:none;color:var(--ai);padding:2px 4px;border:0;font-size:12px;font-weight:400;text-decoration:underline;text-underline-offset:2px}
+.toolbar{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:14px;background:#fff;border:1px solid var(--line);border-radius:2px;padding:10px 14px}
+.toolbar>div{min-width:140px}
+.seg{display:flex;border:1px solid var(--rule);border-radius:3px;overflow:hidden;background:#fff}
+.seg button{border:0;background:none;padding:7px 14px;cursor:pointer;font:inherit;color:var(--ink)}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button.on{background:var(--ai);color:#fff;font-weight:700}
+.range{font-weight:700;padding:7px 4px;white-space:nowrap}
+.empty{color:var(--muted);text-align:center;padding:20px}
+.dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.msg{padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--rule);border-radius:2px;margin-bottom:8px;background:#fff}
+.msg .meta{font-size:11.5px;color:var(--muted);margin-bottom:3px}
+.msg.urgent{border-left-color:var(--shu);background:var(--shu-bg)}
+.inv .tot{font-size:22px;font-weight:700;color:var(--ai)}
+.note{font-size:12px;color:var(--muted);margin-top:8px}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ai);color:#fff;padding:10px 16px;border-radius:3px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+.toast.show{opacity:1}
+.modal-bg{position:fixed;inset:0;background:rgba(20,30,50,.4);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+.modal-bg.show{display:flex}
+.modal{background:#fff;border-radius:3px;border-top:4px solid var(--ai);padding:20px;width:100%;max-width:640px;max-height:90vh;overflow:auto}
+.modal h3{margin-top:0}
+.scroll{overflow-x:auto}
+.tl{max-height:420px;overflow:auto}
+/* approval boxes (承認欄) and hanko */
+.ck-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:14px;margin:2px 2px 10px}
+.ck-head>span:first-child{font-size:13px}
+.ck-head>.rt{justify-self:end;display:flex;align-items:end;gap:14px;font-size:13px}
+.ck-head h3{margin:0;font-family:var(--mincho);font-size:20px;font-weight:700;letter-spacing:.06em;text-align:center}
+.stamps{display:flex;border:1px solid var(--rule)}
+.stamps .sb{width:60px;border:0;border-right:1px solid var(--rule);text-align:center;cursor:pointer;background:#fff;padding:0;font:inherit;color:inherit}
+.stamps .sb:last-child{border-right:0}
+.stamps .sl{display:block;font-size:10.5px;background:var(--head);border-bottom:1px solid var(--rule);padding:2px 0;color:var(--muted)}
+.stamps .sv{display:flex;align-items:center;justify-content:center;height:52px}
+.stamps .sb:hover .sv{background:var(--band)}
+.hanko{width:42px;height:42px;border:2px solid var(--shu);border-radius:50%;color:var(--shu);font-family:var(--mincho);font-weight:700;font-size:13px;line-height:1.05;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-8deg);opacity:.93}
+.hanko.lat{font-size:8.5px;font-family:var(--sans)}
+.hanko i{font-style:normal;font-size:7.5px;font-family:var(--sans);font-weight:400;border-top:1px solid var(--shu);margin-top:2px;padding-top:1px}
+@keyframes press{0%{transform:rotate(-8deg) scale(1.4);opacity:0}70%{transform:rotate(-8deg) scale(.96);opacity:1}100%{transform:rotate(-8deg) scale(1);opacity:.93}}
+.hanko.new{animation:press .24s ease-out}
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:10px 0 14px}
+.pick .btn{justify-content:flex-start}
+@media (prefers-reduced-motion:reduce){.hanko.new{animation:none}.toast{transition:none}}
+@media (max-width:820px){
+  .wrap{flex-direction:column}
+  .brand{width:auto}
+  .facility,.shift span{display:none}
+  nav{width:auto;height:auto;position:static;display:flex;overflow-x:auto;padding:0}
+  nav .grp{display:none}
+  nav button{white-space:nowrap;width:auto;border-left:0;border-bottom:3px solid transparent}
+  nav button.on{border-bottom-color:var(--shu)}
+  main{padding:14px}
+  .g2{grid-template-columns:1fr}
+  .ck-head{grid-template-columns:1fr}
+  .ck-head>.rt{justify-self:start}
+}
+.wt-wrap{overflow:auto;max-height:640px;border:1px solid var(--rule);border-radius:0;background:#fff}
+.wt{border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
+.wt th,.wt td{border-bottom:1px solid var(--rule);border-right:1px solid var(--rule);padding:0;white-space:nowrap}
+.wt th{padding:7px 8px;position:sticky;top:0;z-index:2;text-align:center;background:var(--head);color:#333}
+.wt tr:nth-child(odd)>td{background:var(--band)}.wt tr:nth-child(odd)>td.stk{background:var(--band)}
+.wt td.c{padding:6px 8px}
+.wt .stk{position:sticky;background:#fff;z-index:1}
+.wt th.stk{z-index:3;background:var(--head)}
+.wt .s0{left:0;min-width:40px;text-align:center}.wt .s1{left:40px;min-width:150px}
+.wt input{border:0;border-radius:0;width:64px;text-align:right;padding:6px 6px;background:transparent}
+.wt input:focus{outline:2px solid var(--brand);background:#fff}
+.wt td.loss{background:var(--bad-bg)}.wt td.gain{background:var(--warn-bg)}
+.wt tr.avg td{background:var(--band);font-weight:700}
+.wt td.kg{position:relative}.wt td.kg::after{content:"kg";position:absolute;right:3px;bottom:2px;font-size:9px;color:#aaa}
+
+.hr .hc{min-width:44px;text-align:center;padding:4px 2px;cursor:pointer;font-size:11px;line-height:1.35}
+.hr .hc:hover{outline:2px solid var(--brand);outline-offset:-2px}
+.hr .hc.now{box-shadow:inset 0 0 0 2px var(--brand)}
+.hr th.now{background:var(--brand);color:#fff}
+.hr .ab{display:inline-block;min-width:16px;padding:0 3px;margin:1px;border-radius:3px;color:#fff;font-weight:700}
+.hr td.alertc{background:var(--bad-bg)}
+.hr tr.sum td{background:var(--band);font-weight:700;text-align:center}
+.hr .night{background:#EDF0F6}
+
+.ck{border-collapse:collapse;font-variant-numeric:tabular-nums;background:#fff}
+.ck th,.ck td{border:1px solid var(--rule);padding:2px 4px;white-space:nowrap;font-size:12px}
+.ck th{background:var(--head);text-align:center;position:sticky;top:0;z-index:2}
+.ck td.h{min-width:34px;text-align:left;cursor:pointer;border-top-style:dashed;border-bottom-style:dashed}
+.ck td.h:hover{outline:2px solid var(--brand);outline-offset:-2px}
+.ck td.it{font-size:11px;border-top-style:dashed;border-bottom-style:dashed}
+.ck td.tot{text-align:center;border-top-style:dashed;border-bottom-style:dashed}
+.ck tr.g td{background:#EEF1F5}
+.ck .b8{border-left:2px solid #333!important}
+.ck td.nm{min-width:130px}
+.ck td.low{color:var(--shu);font-weight:700}
+.ck .mk{font-weight:700}
+.ck .ic{color:var(--bad)}
+.ck th.now{background:var(--ai);color:#fff}
+.ck td.h.now{background:#E6ECF6}
+.ck tr.ft td{background:var(--head);font-weight:700;text-align:center;border-top:2px solid #333}
+.ck tr.ft+tr.ft td{border-top-width:1px}
+.ck tr.ft td:first-child{text-align:left}
+.sheet{background:#fff;border:1px solid var(--line);border-radius:2px;padding:14px 16px}
+.sheet table:not(.wt):not(.ck){border-collapse:collapse}
+.sheet table:not(.wt):not(.ck) th,.sheet table:not(.wt):not(.ck) td{border:1px solid var(--rule);padding:5px 8px;font-size:12.5px}
+.sheet table:not(.wt):not(.ck) th{background:var(--head);text-align:center;color:#333;font-weight:700}
+.sheet table:not(.wt):not(.ck) tr:nth-child(odd):not(:first-child)>td{background:var(--band)}
+.sheet .tl{max-height:460px;overflow:auto}
+.legend-sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:middle;margin:0 4px 0 12px;border:1px solid var(--line)}
+
+@media (max-width:760px){
+  .wrap{flex-direction:column}
+  nav{width:auto;display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}
+  nav button{white-space:nowrap;width:auto}
+  main{padding:14px}
+  header .sub{display:none}
+  .g2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i><div><b>CareBridge</b><small data-i18n="tagline"></small></div></div>
+  <div class="facility"><b data-i18n="facility"></b><span id="today"></span><span class="demo" data-i18n="demo"></span></div>
+  <span class="sp"></span>
+  <div class="shift" id="shift"></div>
+  <div class="lang"><button data-lang="en">EN</button><button data-lang="ja">日本語</button></div>
+</header>
+<div class="wrap"><nav id="nav"></nav><main id="main"></main></div>
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =================== i18n =================== */
+const T = {
+ en:{
+  tagline:"Care records", facility:"Sakura Care Home", demo:"Demo", on_duty_now:"On duty now", ppl:"{n}",
+  g_rec:"Records", g_mgmt:"Management", g_conn:"Connections", share_lbl:"Shared with family",
+  sr_rec:"Recorder", sr_nurse:"Nurse", sr_mgr:"Manager", stamp_hint:"Click to stamp this form", stamp_pick:"Stamp as {r}", stamp_who:"Who is stamping?",
+  stamp_remove:"Remove stamp", stamp_by:"Stamped by {n} on {d}.", stamped:"Stamped.", unstamped:"Stamp removed.",
+  fluid:"Fluid", ab_fluid:"F", guided:"Guided to toilet", incont:"Incontinence",
+  export:"Export to Excel", exporting:"Preparing…", exp_saved:"Excel file saved.", exp_declined:"Export cancelled.", exp_busy:"Another save is in progress — try again in a moment.",
+  exp_host:"This app can't save files. Open the page in a browser or on a computer.", exp_fail:"Export failed: {m}", exp_lib:"Could not load the Excel library. Check your connection and try again.",
+  list_res:"Resident List", list_staff:"Staff List", list_rec:"Care Record List", list_bill:"Care Fee Billing", list_plan:"Care Plan List", list_msg:"Staff Messages",
+  count_n:"{n} items", staff_n:"All staff: {n}", daily_title:"Daily Care Report", summary:"Summary", metric:"Metric", value:"Value", hr_title:"24-Hour Sheet", wt_title:"Weight Record Sheet", meal_avg:"Meal avg",
+  nav_check:"Toileting & Fluid", ck_title:"Toileting & Fluid Check Sheet (single day)", ck_d:"Stool, urine and fluid intake for every resident, hour by hour. Click a cell to record or correct.",
+  ck_all:"All residents: {n}", ck_item:"Item", ck_total:"Total", ck_stool:"Stool", ck_urine:"Urine", ck_fluid:"Fluid",
+  ck_leg_g:"✓ … guided to toilet", ck_leg_i:"△ … incontinence", ck_hide:"Hide residents with no records", ck_entry:"Record for {h}", ck_existing:"Records in this hour",
+  ck_ml:"Fluid (ml)", ck_lowfluid:"Daily fluid under {n} ml",
+  nav_hour:"24-Hour Sheet", hour_d:"Hour-by-hour view of one day for every resident, with staff on duty each hour. Click a cell to see or add records for that hour.",
+  show:"Show", all_types:"All types", hr_all_items:"All items", h_other:"Bath / Meds / Notes", hr_day:"Day", prev_day:"Previous day", next_day:"Next day",
+  hr_leg:"U urine  S stool  B bath  Rx meds  N note", hr_red:"Red = needs attention", h_total:"Records / hour", h_staff:"Staff on duty", add_at:"Add record at {h}", legend:"Legend",
+  ab_vital:"V", ab_meal:"M", ab_excretion:"E", ab_bath:"B", ab_med:"Rx", ab_note:"N", ab_urine:"U", ab_stool:"S", ab_both:"U+S",
+  m_temp:"Temperature (°C)", m_meal:"Meal (%)", m_fluid:"Fluid (ml)", m_exc:"Toileting", h_chart:"Activity by hour", h_chart_s:"Records per hour, by type",
+  nav_wt:"Weight Records", height:"Height (cm)", wt_d:"Monthly body weight for every resident, like the paper weight sheet. Click any cell to enter or correct a weight.",
+  wt_months:"Months shown", wt_end:"Up to month", bmi:"BMI", change:"Change", avg_row:"Facility average", copy_csv:"Copy as CSV", copied:"Copied to clipboard.", copy_fail:"Copy was blocked by the browser.",
+  wt_loss:"Lost 2 kg or more vs previous month", wt_gain:"Gained 2 kg or more vs previous month", wt_chart:"Weight trend", wt_chart_s:"kg per month", facility_avg:"Facility average", wt_flag:"Weight alerts this month",
+  wt_note:"Weight is measured monthly. BMI uses the latest weight shown and the resident's height.", n_mo:"{n} months",
+  nav_dash:"Dashboard", nav_daily:"Daily Records", nav_res:"Residents", nav_staff:"Staff", nav_rec:"Care Records", nav_plan:"Care Plans",
+  nav_bill:"Billing", nav_iot:"Sensors (IoT)", nav_msg:"Staff Messages", nav_fam:"Family Portal", nav_set:"Settings",
+  dash_d:"Analytics for the selected period. Filter by day, week, month or year.",
+  p_day:"Day", p_week:"Week", p_month:"Month", p_year:"Year", today:"Today", period:"Period", date:"Date",
+  vs_prev:"vs previous", pts:"pts",
+  k_rec:"Care records", k_alert:"Vital alerts", k_meal:"Avg meal intake", k_bath:"Baths", k_hours:"Staff hours worked", k_res:"Active residents", k_staff:"Staff on duty",
+  c_trend:"Records over time", c_trend_s:"Count of care records per {b}, by type",
+  c_type:"Records by type", c_type_s:"Total in period",
+  c_temp:"Average body temperature", c_temp_s:"°C per {b}",
+  c_bp:"Average blood pressure", c_bp_s:"mmHg per {b}",
+  c_spo2:"Average SpO2", c_spo2_s:"% per {b}",
+  c_meal:"Average meal intake by resident", c_meal_s:"% of meal eaten",
+  c_srec:"Records entered by staff", c_srec_s:"Number of records",
+  c_shours:"Hours worked by staff", c_shours_s:"From clock-in / clock-out",
+  c_alert:"Vital alerts by resident", c_alert_s:"Abnormal readings in period",
+  c_lvl:"Residents by care level", c_lvl_s:"Current residents",
+  c_fee:"Monthly care fees (last 12 months)", c_fee_s:"Total fee, ¥",
+  b_hour:"hour", b_day:"day", b_month:"month",
+  show_table:"Table", show_chart:"Chart",
+  alerts:"Alerts in period", no_alert:"No alerts in this period.",
+  daily_d:"Everything that happened on one day: staff attendance, each resident's summary and the full timeline.",
+  prev:'<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>', next:'<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>', staff_duty:"Staff attendance", res_summary:"Resident daily summary", timeline:"Timeline (all records)",
+  shift:"Shift", clock_in:"Clock in", clock_out:"Clock out", hours:"Hours", status:"Status",
+  st_on:"On duty", st_done:"Finished", st_off:"Day off", st_wait:"Not yet in",
+  meals:"Meals", fluid:"Fluid", exc_n:"Excretion", baths:"Bath", meds:"Meds", notes:"Notes", detail:"Detail", records:"Records",
+  sh_early:"Early 07–16", sh_day:"Day 09–18", sh_late:"Late 11–20", sh_night:"Night 17–10",
+  role:"Role", ro_care:"Care worker", ro_nurse:"Nurse", ro_mgr:"Care manager", ro_rehab:"Rehab trainer",
+  staff_d:"Manage staff, roles and shifts. Figures are for the current month.",
+  add_staff:"+ Add staff", days_worked:"Days worked", phone:"Phone",
+  res_d:"Manage resident profiles, care level and service type.",
+  add_res:"+ Add resident", name_en:"Name (English)", name_ja:"Name (Japanese)", room:"Room", level:"Care level",
+  service:"Service", dob:"Date of birth", family:"Family contact", actions:"Actions", edit:"Edit", del:"Delete",
+  save:"Save", cancel:"Cancel", resident:"Resident", staff:"Staff", all:"All", from:"From", to:"To",
+  rec_d:"Enter daily care records and search all records.",
+  new_rec:"New record", type:"Type", time:"Time", by:"Staff", share:"Share with family",
+  vital:"Vitals", meal:"Meal", excretion:"Excretion", bath:"Bathing", med:"Medication", note:"Note",
+  meal_amt:"Amount eaten (%)", water:"Fluid (ml)", exc_type:"Type", urine:"Urine", stool:"Stool", both:"Both",
+  bath_type:"Bath type", full:"Full bath", shower:"Shower", wipe:"Bed wipe",
+  temp:"Temp (°C)", bp_s:"BP systolic", bp_d:"BP diastolic", pulse:"Pulse", spo2:"SpO2 (%)",
+  med_name:"Medicine", given:"Given", memo:"Memo", voice:'<i class="fa-solid fa-microphone" aria-hidden="true"></i> Voice input',
+  voice_note:"Voice input works in a real product; this demo inserts sample text.",
+  showing:"Showing {n} of {t} records",
+  plan_d:"Long-term & short-term goals, services, and review schedule, with a simple risk forecast.",
+  long_goal:"Long-term goal", short_goal:"Short-term goal", services:"Services", review:"Next review",
+  forecast:"Forecast (1 year)", f_stable:"Stable", f_watch:"Watch", f_risk:"Risk of decline", edit_plan:"Edit plan",
+  f_why:"Based on the last 30 days of vital alerts and meal intake.",
+  bill_d:"Monthly care fee calculation (simplified). Days used are counted from care records.",
+  month:"Month", days:"Days used", units:"Units", total:"Total fee", copay:"Copay",
+  copay_rate:"Copay rate", view_inv:"Invoice", inv_title:"Care Service Invoice",
+  inv_to:"To the family of", items:"Item", amount:"Amount", base_fee:"Care service fee", ins_paid:"Paid by insurance",
+  you_pay:"Amount due", bill_note:"Demo calculation: units per day by care level × days × ¥10/unit. Real billing follows official fee schedules.",
+  iot_d:"Live status from bed / monitoring sensors (simulated).",
+  in_bed:"In bed", out_bed:"Out of bed", asleep:"Asleep", move:"Moving", alert_s:"Needs attention", last:"Updated",
+  msg_d:"Share information between staff, like an intercom board.",
+  post:"Post", urgent:"Urgent", msg_ph:"Write a message to staff…", no_msg:"No messages yet.",
+  fam_d:"What families see: shared records, invoices and notices.",
+  fam_view:"Viewing as family of", shared_rec:"Shared updates (last 14 days)", notices:"Notices", latest_inv:"This month's invoice",
+  notice1:"Seasonal flu vaccinations are scheduled for next week.", notice2:"Family visiting hours: 10:00–17:00.",
+  set_d:"Demo settings. The app includes 12 months of generated sample history.", reset:"Reset my changes", reset_ok:"Your changes were cleared.", saved:"Saved.", deleted:"Deleted.",
+  confirm_del:"Delete this item?", yes:"Yes, delete",
+  svc_fac:"Facility (nursing home)", svc_day:"Day care", svc_home:"Home visit care", svc_short:"Short stay", svc_gh:"Group home",
+  lvl:"Care ", sup:"Support ", required:"Please fill required fields.", nodata:"No data.",
+  days_short:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"], months_short:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+ },
+ ja:{
+  tagline:"介護記録システム", facility:"さくらの里", demo:"デモ", on_duty_now:"勤務中", ppl:"{n}名",
+  g_rec:"記録", g_mgmt:"管理", g_conn:"連携", share_lbl:"家族と共有",
+  sr_rec:"記録者", sr_nurse:"看護", sr_mgr:"管理者", stamp_hint:"クリックして押印", stamp_pick:"{r}として押印", stamp_who:"押印する職員を選んでください",
+  stamp_remove:"押印を取り消す", stamp_by:"{d} {n} が押印しました。", stamped:"押印しました。", unstamped:"押印を取り消しました。",
+  fluid:"水分", ab_fluid:"水", guided:"誘導あり", incont:"失禁あり",
+  export:"Excelに出力", exporting:"作成中…", exp_saved:"Excelファイルを保存しました。", exp_declined:"出力をキャンセルしました。", exp_busy:"別の保存処理中です。少し待ってから再度お試しください。",
+  exp_host:"このアプリではファイルを保存できません。ブラウザまたはパソコンで開いてください。", exp_fail:"出力に失敗しました：{m}", exp_lib:"Excelライブラリを読み込めませんでした。接続を確認して再度お試しください。",
+  list_res:"利用者一覧", list_staff:"職員一覧", list_rec:"介護記録一覧", list_bill:"介護報酬 請求一覧", list_plan:"ケアプラン一覧", list_msg:"職員連絡一覧",
+  count_n:"{n}件", staff_n:"全ての職員：{n}名", daily_title:"介護日報", summary:"概要", metric:"項目", value:"値", hr_title:"24時間シート", wt_title:"体重記録表", meal_avg:"食事平均",
+  nav_check:"排泄・水分チェック", ck_title:"排泄・水分チェック表（単日）", ck_d:"全利用者の排便・排尿・水分を1時間ごとに表示します。セルをクリックして記録・修正できます。",
+  ck_all:"全ての利用者：{n}名", ck_item:"項目", ck_total:"合計", ck_stool:"排便", ck_urine:"排尿", ck_fluid:"水分",
+  ck_leg_g:"✓…誘導あり", ck_leg_i:"△…失禁あり", ck_hide:"記録のない利用者を隠す", ck_entry:"{h} の記録", ck_existing:"この時間の記録",
+  ck_ml:"水分（ml）", ck_lowfluid:"1日の水分 {n}ml 未満",
+  nav_hour:"24時間シート", hour_d:"全利用者の1日を1時間ごとに表示します。各時間の出勤職員数も表示。セルをクリックすると記録の確認・追加ができます。",
+  show:"表示", all_types:"すべての種別", hr_all_items:"全項目", h_other:"入浴・服薬・申送り", hr_day:"1日計", prev_day:"前日", next_day:"翌日",
+  hr_leg:"尿…排尿　便…排便　浴…入浴　薬…服薬　申…申送り", hr_red:"赤字…要注意", h_total:"記録数／時", h_staff:"勤務職員数", add_at:"{h} に記録を追加", legend:"凡例",
+  ab_vital:"バ", ab_meal:"食", ab_excretion:"排", ab_bath:"浴", ab_med:"薬", ab_note:"申", ab_urine:"尿", ab_stool:"便", ab_both:"尿便",
+  m_temp:"体温（℃）", m_meal:"食事（％）", m_fluid:"水分（ml）", m_exc:"排泄", h_chart:"時間帯別の記録", h_chart_s:"1時間ごとの記録数（種別別）",
+  nav_wt:"体重記録", height:"身長（cm）", wt_d:"全利用者の月別体重。紙の体重表と同じ形式です。セルをクリックして入力・修正できます。",
+  wt_months:"表示月数", wt_end:"最終月", bmi:"BMI", change:"増減", avg_row:"施設平均", copy_csv:"CSVでコピー", copied:"クリップボードにコピーしました。", copy_fail:"ブラウザによりコピーがブロックされました。",
+  wt_loss:"前月比 2kg以上の減少", wt_gain:"前月比 2kg以上の増加", wt_chart:"体重の推移", wt_chart_s:"月ごと（kg）", facility_avg:"施設平均", wt_flag:"今月の体重アラート",
+  wt_note:"体重は毎月測定します。BMIは表示中の最新体重と身長から計算します。", n_mo:"{n}か月",
+  nav_dash:"ダッシュボード", nav_daily:"一日の記録", nav_res:"利用者管理", nav_staff:"職員管理", nav_rec:"介護記録", nav_plan:"ケアプラン",
+  nav_bill:"請求", nav_iot:"センサー（IoT）", nav_msg:"職員連絡", nav_fam:"家族ポータル", nav_set:"設定",
+  dash_d:"選択した期間の分析。日・週・月・年で絞り込めます。",
+  p_day:"日", p_week:"週", p_month:"月", p_year:"年", today:"今日", period:"期間", date:"日付",
+  vs_prev:"前期間比", pts:"pt",
+  k_rec:"介護記録数", k_alert:"バイタル警告", k_meal:"平均食事摂取量", k_bath:"入浴回数", k_hours:"職員勤務時間", k_res:"記録のある利用者", k_staff:"出勤職員",
+  c_trend:"記録数の推移", c_trend_s:"{b}ごとの介護記録数（種別別）",
+  c_type:"種別ごとの記録数", c_type_s:"期間内の合計",
+  c_temp:"平均体温", c_temp_s:"{b}ごとの平均（℃）",
+  c_bp:"平均血圧", c_bp_s:"{b}ごとの平均（mmHg）",
+  c_spo2:"平均SpO2", c_spo2_s:"{b}ごとの平均（％）",
+  c_meal:"利用者別 平均食事摂取量", c_meal_s:"摂取割合（％）",
+  c_srec:"職員別 記録入力数", c_srec_s:"記録件数",
+  c_shours:"職員別 勤務時間", c_shours_s:"出退勤記録より",
+  c_alert:"利用者別 バイタル警告", c_alert_s:"期間内の異常値",
+  c_lvl:"要介護度別 利用者数", c_lvl_s:"現在の利用者",
+  c_fee:"月別介護報酬（過去12か月）", c_fee_s:"総費用（円）",
+  b_hour:"時間", b_day:"日", b_month:"月",
+  show_table:"表", show_chart:"グラフ",
+  alerts:"期間内のアラート", no_alert:"この期間のアラートはありません。",
+  daily_d:"1日の出来事すべて：職員の出退勤、利用者ごとのまとめ、全記録のタイムライン。",
+  prev:'<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>', next:'<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>', staff_duty:"職員の出退勤", res_summary:"利用者の一日のまとめ", timeline:"タイムライン（全記録）",
+  shift:"勤務", clock_in:"出勤", clock_out:"退勤", hours:"時間", status:"状況",
+  st_on:"勤務中", st_done:"退勤済", st_off:"休み", st_wait:"未出勤",
+  meals:"食事", fluid:"水分", exc_n:"排泄", baths:"入浴", meds:"服薬", notes:"申し送り", detail:"詳細", records:"記録",
+  sh_early:"早番 7–16", sh_day:"日勤 9–18", sh_late:"遅番 11–20", sh_night:"夜勤 17–10",
+  role:"職種", ro_care:"介護職員", ro_nurse:"看護師", ro_mgr:"ケアマネジャー", ro_rehab:"機能訓練指導員",
+  staff_d:"職員・職種・勤務を管理します。数値は今月分です。",
+  add_staff:"＋ 職員追加", days_worked:"出勤日数", phone:"電話",
+  res_d:"利用者情報、要介護度、サービス種別を管理します。",
+  add_res:"＋ 利用者追加", name_en:"氏名（英語）", name_ja:"氏名（日本語）", room:"居室", level:"要介護度",
+  service:"サービス", dob:"生年月日", family:"家族連絡先", actions:"操作", edit:"編集", del:"削除",
+  save:"保存", cancel:"キャンセル", resident:"利用者", staff:"職員", all:"すべて", from:"開始", to:"終了",
+  rec_d:"日々の介護記録の入力と全記録の検索。",
+  new_rec:"新規記録", type:"種別", time:"時刻", by:"記録者", share:"家族と共有",
+  vital:"バイタル", meal:"食事", excretion:"排泄", bath:"入浴", med:"服薬", note:"申し送り",
+  meal_amt:"摂取量（％）", water:"水分（ml）", exc_type:"種類", urine:"排尿", stool:"排便", both:"両方",
+  bath_type:"入浴方法", full:"一般浴", shower:"シャワー浴", wipe:"清拭",
+  temp:"体温（℃）", bp_s:"血圧（上）", bp_d:"血圧（下）", pulse:"脈拍", spo2:"SpO2（％）",
+  med_name:"薬剤名", given:"服薬済", memo:"メモ", voice:'<i class="fa-solid fa-microphone" aria-hidden="true"></i> 音声入力',
+  voice_note:"実製品では音声入力が使えます。デモではサンプル文を挿入します。",
+  showing:"{t}件中 {n}件を表示",
+  plan_d:"長期・短期目標、サービス内容、見直し時期を管理します。簡易リスク予測付き。",
+  long_goal:"長期目標", short_goal:"短期目標", services:"サービス内容", review:"次回見直し",
+  forecast:"予測（1年後）", f_stable:"安定", f_watch:"要観察", f_risk:"状態悪化リスク", edit_plan:"プラン編集",
+  f_why:"直近30日のバイタル警告と食事摂取量に基づく予測です。",
+  bill_d:"月次の介護報酬計算（簡易版）。利用日数は介護記録から集計します。",
+  month:"対象月", days:"利用日数", units:"単位数", total:"総費用", copay:"自己負担",
+  copay_rate:"負担割合", view_inv:"請求書", inv_title:"介護サービス利用料 請求書",
+  inv_to:"ご家族様", items:"項目", amount:"金額", base_fee:"介護サービス費", ins_paid:"保険給付額",
+  you_pay:"ご請求額", bill_note:"デモ計算：要介護度別の1日単位数 × 日数 × 10円。実際の請求は公式の報酬基準に従います。",
+  iot_d:"ベッド・見守りセンサーのリアルタイム状況（シミュレーション）。",
+  in_bed:"在床", out_bed:"離床", asleep:"睡眠中", move:"体動あり", alert_s:"要対応", last:"更新",
+  msg_d:"インカムのように職員間で情報共有します。",
+  post:"投稿", urgent:"至急", msg_ph:"職員へのメッセージを入力…", no_msg:"メッセージはまだありません。",
+  fam_d:"ご家族向け画面：共有記録、請求書、お知らせ。",
+  fam_view:"表示中のご家族：", shared_rec:"共有された近況（直近14日）", notices:"お知らせ", latest_inv:"今月の請求書",
+  notice1:"来週、インフルエンザ予防接種を実施します。", notice2:"面会時間：10:00〜17:00",
+  set_d:"デモの設定。12か月分のサンプル履歴を自動生成しています。", reset:"変更を初期化", reset_ok:"変更を初期化しました。", saved:"保存しました。", deleted:"削除しました。",
+  confirm_del:"削除しますか？", yes:"削除する",
+  svc_fac:"施設（特養）", svc_day:"通所介護", svc_home:"訪問介護", svc_short:"短期入所", svc_gh:"グループホーム",
+  lvl:"要介護", sup:"要支援", required:"必須項目を入力してください。", nodata:"データがありません。",
+  days_short:["月","火","水","木","金","土","日"], months_short:["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"]
+ }
+};
+let lang="en";
+const t=(k,vars)=>{ let s=T[lang][k]??k; if(vars) for(const v in vars) s=s.replace("{"+v+"}",vars[v]); return s; };
+
+/* =================== utils =================== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d);};
+const addD=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return ymd(d);};
+const toMin=s=>{const [h,m]=s.split(":").map(Number);return h*60+m;};
+const fromMin=m=>`${pad(Math.floor(m/60)%24)}:${pad(m%60)}`;
+const nowMin=()=>{const n=new Date();return n.getHours()*60+n.getMinutes();};
+const TODAY=ymd(new Date());
+const uid=()=>Math.random().toString(36).slice(2,9);
+const yen=n=>"¥"+Math.round(n).toLocaleString();
+function toast(m){const el=$("#toast");el.textContent=m;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1800);}
+function openModal(h){$("#modal").innerHTML=h;$("#modalBg").classList.add("show");}
+function closeModal(){$("#modalBg").classList.remove("show");}
+window.closeModal=closeModal;
+$("#modalBg").addEventListener("click",e=>{if(e.target.id==="modalBg")closeModal();});
+
+/* =================== base data =================== */
+const SHIFTS={early:[420,960],day:[540,1080],late:[660,1200],night:[1020,600+1440]};
+const BASE_STAFF=[
+ {id:"s1",en:"Ken Yamada",ja:"山田 健",role:"ro_care",shift:"day",phone:"090-1111-0001"},
+ {id:"s2",en:"Aiko Kimura",ja:"木村 愛子",role:"ro_nurse",shift:"early",phone:"090-1111-0002"},
+ {id:"s3",en:"Hiroshi Nakamura",ja:"中村 博",role:"ro_care",shift:"late",phone:"090-1111-0003"},
+ {id:"s4",en:"Mika Kobayashi",ja:"小林 美香",role:"ro_care",shift:"night",phone:"090-1111-0004"},
+ {id:"s5",en:"Yuki Kato",ja:"加藤 由紀",role:"ro_mgr",shift:"day",phone:"090-1111-0005"},
+ {id:"s6",en:"Sho Yoshida",ja:"吉田 翔",role:"ro_rehab",shift:"day",phone:"090-1111-0006"},
+ {id:"s7",en:"Naomi Yamamoto",ja:"山本 直美",role:"ro_nurse",shift:"early",phone:"090-1111-0007"},
+ {id:"s8",en:"Daichi Mori",ja:"森 大地",role:"ro_care",shift:"night",phone:"090-1111-0008"}
+];
+const OFF={s1:[2,6],s2:[0,3],s3:[1,4],s4:[2,5],s5:[5,6],s6:[3,6],s7:[1,5],s8:[0,4]}; // weekly days off (0=Mon)
+const BASE_RES=[
+ {id:"r1",en:"Hanako Tanaka",ja:"田中 花子",room:"101",level:"3",svc:"svc_fac",dob:"1938-04-12",fam:"Tanaka Ichiro (son)"},
+ {id:"r2",en:"Taro Suzuki",ja:"鈴木 太郎",room:"102",level:"2",svc:"svc_fac",dob:"1941-09-03",fam:"Suzuki Yumi (daughter)"},
+ {id:"r3",en:"Keiko Sato",ja:"佐藤 恵子",room:"103",level:"4",svc:"svc_fac",dob:"1935-01-25",fam:"Sato Ken (son)"},
+ {id:"r4",en:"Jiro Ito",ja:"伊藤 次郎",room:"D-1",level:"1",svc:"svc_day",dob:"1945-06-30",fam:"Ito Mari (wife)",days:[0,2,4]},
+ {id:"r5",en:"Yoshiko Watanabe",ja:"渡辺 佳子",room:"201",level:"5",svc:"svc_short",dob:"1932-11-08",fam:"Watanabe Jun (son)"},
+ {id:"r6",en:"Masao Takahashi",ja:"高橋 正夫",room:"202",level:"2",svc:"svc_fac",dob:"1940-02-14",fam:"Takahashi Emi (daughter)"},
+ {id:"r7",en:"Fumiko Matsumoto",ja:"松本 文子",room:"GH-3",level:"3",svc:"svc_gh",dob:"1937-07-19",fam:"Matsumoto Ryo (son)"},
+ {id:"r8",en:"Kenji Inoue",ja:"井上 健二",room:"D-2",level:"s2",svc:"svc_day",dob:"1946-12-01",fam:"Inoue Sachi (wife)",days:[1,4]},
+ {id:"r9",en:"Akiko Ishikawa",ja:"石川 明子",room:"203",level:"3",svc:"svc_fac",dob:"1936-03-09",fam:"Ishikawa Taku (son)"},
+ {id:"r10",en:"Shigeru Ogawa",ja:"小川 茂",room:"204",level:"4",svc:"svc_fac",dob:"1934-08-21",fam:"Ogawa Rie (daughter)"},
+ {id:"r11",en:"Tomiko Hayashi",ja:"林 富子",room:"205",level:"5",svc:"svc_fac",dob:"1931-05-02",fam:"Hayashi Koji (son)"},
+ {id:"r12",en:"Isamu Shimizu",ja:"清水 勇",room:"D-3",level:"1",svc:"svc_day",dob:"1944-10-15",fam:"Shimizu Aya (wife)",days:[0,3]},
+ {id:"r13",en:"Chiyo Yamaguchi",ja:"山口 千代",room:"206",level:"2",svc:"svc_fac",dob:"1939-12-28",fam:"Yamaguchi Mai (daughter)"},
+ {id:"r14",en:"Minoru Saito",ja:"斎藤 稔",room:"207",level:"3",svc:"svc_fac",dob:"1937-06-11",fam:"Saito Hiro (son)"},
+ {id:"r15",en:"Kazuko Maeda",ja:"前田 和子",room:"208",level:"4",svc:"svc_fac",dob:"1933-02-17",fam:"Maeda Yu (son)"},
+ {id:"r16",en:"Tadashi Fujita",ja:"藤田 正",room:"301",level:"2",svc:"svc_short",dob:"1942-09-30",fam:"Fujita Nao (daughter)"},
+ {id:"r17",en:"Sumiko Okada",ja:"岡田 澄子",room:"302",level:"3",svc:"svc_fac",dob:"1935-11-04",fam:"Okada Shin (son)"},
+ {id:"r18",en:"Haruo Goto",ja:"後藤 春夫",room:"303",level:"5",svc:"svc_fac",dob:"1930-04-23",fam:"Goto Kaori (daughter)"},
+ {id:"r19",en:"Teruko Hasegawa",ja:"長谷川 照子",room:"D-4",level:"s1",svc:"svc_day",dob:"1947-01-19",fam:"Hasegawa Ken (son)",days:[1,3,4]},
+ {id:"r20",en:"Yasuo Murakami",ja:"村上 康夫",room:"GH-1",level:"2",svc:"svc_gh",dob:"1940-07-07",fam:"Murakami Eri (daughter)"},
+ {id:"r21",en:"Setsuko Kondo",ja:"近藤 節子",room:"GH-2",level:"3",svc:"svc_gh",dob:"1938-03-26",fam:"Kondo Jun (son)"},
+ {id:"r22",en:"Noboru Ishii",ja:"石井 昇",room:"304",level:"4",svc:"svc_fac",dob:"1936-12-12",fam:"Ishii Saki (daughter)"},
+ {id:"r23",en:"Mitsuko Sakamoto",ja:"坂本 光子",room:"305",level:"1",svc:"svc_fac",dob:"1943-05-31",fam:"Sakamoto Ryo (son)"},
+ {id:"r24",en:"Takeshi Endo",ja:"遠藤 武",room:"306",level:"3",svc:"svc_fac",dob:"1938-08-08",fam:"Endo Mika (daughter)"}
+];
+BASE_RES.forEach((r,i)=>{const f=/子$|代$/.test(r.ja);r.ht=(f?140:152)+((i*37)%15);});
+
+/* =================== user changes (persisted) =================== */
+const KEY="carebridge-demo-v3";
+function blank(){
+  const addD0=n=>addD(TODAY,n);
+  return {
+    staff:JSON.parse(JSON.stringify(BASE_STAFF)),
+    res:JSON.parse(JSON.stringify(BASE_RES)),
+    userRec:[], deleted:{}, att:{}, wt:{}, stamps:{},
+    plans:{
+      r1:{long:"Maintain walking ability with cane / 杖歩行を維持する",short:"Walk to dining room daily / 毎日食堂まで歩行",svc:"Rehab 3x/week, bathing 2x/week",review:addD0(20)},
+      r2:{long:"Stable health and nutrition / 健康と栄養状態の安定",short:"Meal intake over 70% / 食事摂取量7割以上",svc:"Vitals daily, nutrition support",review:addD0(5)},
+      r3:{long:"Safe daily life without falls / 転倒なく安全に生活",short:"Use call button before standing / 立ち上がり前にナースコール",svc:"Bed sensor, assisted bathing",review:addD0(40)},
+      r4:{long:"Continue living at home / 在宅生活の継続",short:"Attend day care 3 days/week / 週3回通所",svc:"Day care, recreation",review:addD0(60)},
+      r5:{long:"Comfortable stay / 安楽な生活",short:"Monitor blood pressure / 血圧管理",svc:"Short stay, vitals 2x/day",review:addD0(3)},
+      r6:{long:"Keep independence in toileting / 排泄の自立維持",short:"Scheduled toilet guidance / 定時誘導",svc:"Excretion support",review:addD0(14)},
+      r7:{long:"Calm life in group home / 落ち着いた共同生活",short:"Join daily cooking activity / 調理活動に参加",svc:"Group activities",review:addD0(30)},
+      r8:{long:"Prevent frailty / フレイル予防",short:"Exercise class 2x/week / 体操教室 週2回",svc:"Day care, exercise",review:addD0(45)}
+    },
+    copay:{r1:.1,r2:.1,r3:.2,r4:.1,r5:.3,r6:.1,r7:.2,r8:.1},
+    msgs:[
+      {id:uid(),by:"s2",at:`${TODAY} 08:20`,text:"Suzuki-san (102): please re-check temperature at noon. / 102号室 鈴木様 昼に再検温お願いします。",urgent:true},
+      {id:uid(),by:"s1",at:`${TODAY} 09:05`,text:"Bath schedule changed: Room 103 moved to afternoon. / 103号室の入浴を午後に変更しました。",urgent:false}
+    ]
+  };
+}
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(v&&v.res)return v;}catch(e){}return blank();}
+let db=load();
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){}};
+
+/* =================== generated 12-month history =================== */
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const HIST_START=addD(TODAY,-365);
+const genRec=new Map(), genAtt=new Map();
+(function generate(){
+  const R=rng(20261126);
+  const base={};
+  BASE_RES.forEach((r,i)=>base[r.id]={temp:36.3+R()*.3,bps:118+R()*28,bpd:70+R()*12,pulse:66+R()*14,spo2:95.5+R()*2,meal:62+R()*30});
+  const nm=nowMin();
+  for(let d=HIST_START; d<=TODAY; d=addD(d,1)){
+    const dow=(parse(d).getDay()+6)%7, isToday=d===TODAY;
+    // staff attendance
+    const att=[];
+    BASE_STAFF.forEach((s,i)=>{
+      if(OFF[s.id].includes(dow)) return; // two days off per week
+      const [st,en]=SHIFTS[s.shift];
+      const inM=st-10+Math.floor(R()*18), outM=en+Math.floor(R()*35);
+      if(isToday && nm<inM) return;
+      att.push({sid:s.id,shift:s.shift,in:fromMin(inM),out:(isToday&&nm<outM)?null:fromMin(outM%1440)});
+    });
+    genAtt.set(d,att);
+    const working=att.map(a=>a.sid);
+    const pick=(min)=>{const c=BASE_STAFF.filter(s=>{if(!working.includes(s.id))return false;const [a,b]=SHIFTS[s.shift];return (min>=a&&min<b)||(b>1440&&min<b-1440);});const pool=c.length?c:BASE_STAFF.filter(s=>working.includes(s.id));return (pool[Math.floor(R()*pool.length)]||BASE_STAFF[0]).id;};
+    const recs=[]; let k=0;
+    const push=(rid,min,type,v,memo="",share=false)=>{ if(isToday&&min>nm) return; recs.push({id:`g-${d}-${rid}-${k++}`,rid,date:d,time:fromMin(min),type,v,memo,share,by:pick(min)}); };
+    BASE_RES.forEach((r,ri)=>{
+      if(r.svc==="svc_day" && !(r.days||[0,2,4]).includes(dow)) return;
+      const b=base[r.id]; const season=Math.cos((parse(d).getMonth()-0)/12*2*Math.PI)*4;
+      const fever=R()<.03, spike=R()<.035, low=R()<.025;
+      const day=r.svc==="svc_day";
+      const vt=(day?570:450)+Math.floor(R()*30);
+      push(r.id,vt,"vital",{temp:+(b.temp+(R()-.5)*.4+(fever?1.3:0)).toFixed(1),bps:Math.round(b.bps+season+(R()-.5)*14+(spike?28:0)),bpd:Math.round(b.bpd+(R()-.5)*8+(spike?10:0)),pulse:Math.round(b.pulse+(R()-.5)*12+(fever?14:0)),spo2:Math.round(b.spo2+(R()-.5)*2-(low?4:0))});
+      const mealTimes=day?[720]:[480,720,1080];
+      mealTimes.forEach(mt=>{const a=Math.max(0,Math.min(100,Math.round((b.meal+(R()-.5)*30-(fever?25:0))/10)*10));push(r.id,mt+Math.floor(R()*20),"meal",{amt:a,water:100+Math.round(R()*15)*10},"",mt===720&&R()<.25);});
+      (day?[600,780]:[60,240,420,600,720,900,1080,1260]).forEach(et=>{const g=R()<.25;push(r.id,et+Math.floor(R()*40),"excretion",{u:R()<.85?1:0,s:R()<.14?1:0,g,i:!g&&R()<.07});});
+      (day?[600,900]:[600,900,1170]).forEach(ft=>push(r.id,ft+Math.floor(R()*15),"fluid",{ml:[100,100,150,150,200][Math.floor(R()*5)]}));
+      if(day? R()<.5 : (Math.floor((parse(d)-parse(HIST_START))/864e5)+ri)%3===0) push(r.id,840+Math.floor(R()*60),"bath",{bath:["full","shower","wipe"][Math.floor(R()*3)]},"",R()<.3);
+      push(r.id,(day?735:510)+Math.floor(R()*10),"med",{name:["Amlodipine","Magnesium oxide","Donepezil","Vitamin D"][ri%4],given:R()>.02});
+      if(R()<.15){const n=lang==="ja"?0:0;const notes=["Joined recreation, smiling / レクリエーションに参加、笑顔あり","Talked with family on phone / ご家族と電話で会話","Slept well / よく眠れていた","Walked in garden / 庭を散歩","Seemed tired, rested in room / 疲れた様子、居室で休息"];push(r.id,960+Math.floor(R()*60),"note",{},notes[Math.floor(R()*notes.length)],true);}
+    });
+    genRec.set(d,recs);
+  }
+})();
+
+/* =================== data access =================== */
+let userIdx=null;
+function buildUserIdx(){userIdx=new Map();db.userRec.forEach(r=>{if(!userIdx.has(r.date))userIdx.set(r.date,[]);userIdx.get(r.date).push(r);});}
+buildUserIdx();
+function dayRecs(d){
+  const resIds=new Set(db.res.map(r=>r.id));
+  const g=(genRec.get(d)||[]).filter(r=>!db.deleted[r.id]&&resIds.has(r.rid));
+  return g.concat((userIdx.get(d)||[]).filter(r=>resIds.has(r.rid)));
+}
+function recsRange(from,to){const out=[];for(let d=from;d<=to;d=addD(d,1)){if(d>TODAY)break;const a=dayRecs(d);for(let i=0;i<a.length;i++)out.push(a[i]);}return out;}
+function dayAtt(d){
+  const staffIds=new Set(db.staff.map(s=>s.id));
+  const g=(genAtt.get(d)||[]).filter(a=>staffIds.has(a.sid)).map(a=>({...a}));
+  db.staff.forEach(s=>{
+    const o=db.att[`${d}|${s.id}`]; if(!o) return;
+    const i=g.findIndex(a=>a.sid===s.id);
+    if(o.off){ if(i>=0) g.splice(i,1); return; }
+    const rec={sid:s.id,shift:s.shift,in:o.in,out:o.out??null};
+    if(i>=0) g[i]=rec; else g.push(rec);
+  });
+  return g;
+}
+function attHours(a,d){
+  if(!a.in) return 0;
+  let outM = a.out ? toMin(a.out) : (d===TODAY ? nowMin() : null);
+  if(outM==null) return 0;
+  let m=outM-toMin(a.in); if(m<0) m+=1440; return m/60;
+}
+const staffName=id=>{const s=db.staff.find(x=>x.id===id);return s?(lang==="ja"?s.ja:s.en):"—";};
+const rname=id=>{const r=db.res.find(x=>x.id===id);return r?(lang==="ja"?r.ja:r.en):"—";};
+const levelLabel=l=>String(l).startsWith("s")?`${t("sup")}${l.slice(1)}`:`${t("lvl")}${l}`;
+function vitalFlags(v){
+  const f=[];
+  if(v.temp>=37.5) f.push(`${lang==="ja"?"体温":"Temp"} ${v.temp}℃`);
+  if(v.bps>=160||v.bps<90) f.push(`BP ${v.bps}/${v.bpd}`);
+  if(v.spo2&&v.spo2<93) f.push(`SpO2 ${v.spo2}%`);
+  if(v.pulse>=110||v.pulse<50) f.push(`${lang==="ja"?"脈拍":"Pulse"} ${v.pulse}`);
+  return f;
+}
+const isAlert=r=>r.type==="vital"&&vitalFlags(r.v).length>0;
+function recSummary(r){
+  const v=r.v||{};
+  switch(r.type){
+    case "meal":return `${v.amt}% · ${v.water}ml`;
+    case "excretion":{const e=excF(v);return `${t("urine")} ${e.u} · ${t("stool")} ${e.s}${e.g?" · ✓"+t("guided"):""}${e.i?" · △"+t("incont"):""}`;}
+    case "fluid":return `${v.ml} ml`;
+    case "bath":return t(v.bath);
+    case "vital":return `${v.temp}℃ · BP ${v.bps}/${v.bpd} · ${lang==="ja"?"脈":"P"} ${v.pulse} · SpO2 ${v.spo2}%`;
+    case "med":return `${esc(v.name)} ${v.given?"✔":"✗"}`;
+    default:return "";
+  }
+}
+/* categorical palette (fixed order) */
+const PAL=["#257de0","#f47230","#00b894","#f2a600","#ee7fac","#008a17","#6a4ce2","#ec4647"];
+const TYPES=["vital","meal","excretion","bath","med","note","fluid"];
+/* excretion flags, compatible with older {exc:"urine"} records */
+function excF(v){if("u" in v)return v;return {u:v.exc==="urine"||v.exc==="both"?1:0,s:v.exc==="stool"||v.exc==="both"?1:0,g:false,i:false};}
+const fluidMl=r=>r.type==="fluid"?(r.v.ml||0):r.type==="meal"?(r.v.water||0):0;
+const typeColor=ty=>PAL[TYPES.indexOf(ty)];
+const typeTag=ty=>`<span style="white-space:nowrap"><span class="tdot" style="background:${typeColor(ty)}"></span>${t(ty)}</span>`;
+const UNITS={"s1":160,"s2":330,"1":700,"2":770,"3":840,"4":910,"5":980};
+const resOpts=(sel,all)=>(all?`<option value="">${t("all")}</option>`:"")+db.res.map(r=>`<option value="${r.id}" ${r.id===sel?"selected":""}>${esc(lang==="ja"?r.ja:r.en)}</option>`).join("");
+const staffOpts=(sel,all)=>(all?`<option value="">${t("all")}</option>`:"")+db.staff.map(s=>`<option value="${s.id}" ${s.id===sel?"selected":""}>${esc(lang==="ja"?s.ja:s.en)}</option>`).join("");
+
+/* =================== periods =================== */
+function rangeOf(period,anchor){
+  const d=parse(anchor);
+  if(period==="day") return {from:anchor,to:anchor};
+  if(period==="week"){const dow=(d.getDay()+6)%7;const f=addD(anchor,-dow);return {from:f,to:addD(f,6)};}
+  if(period==="month"){const f=ymd(new Date(d.getFullYear(),d.getMonth(),1));return {from:f,to:ymd(new Date(d.getFullYear(),d.getMonth()+1,0))};}
+  return {from:`${d.getFullYear()}-01-01`,to:`${d.getFullYear()}-12-31`};
+}
+function shiftAnchor(period,anchor,dir){
+  const d=parse(anchor);
+  if(period==="day") return addD(anchor,dir);
+  if(period==="week") return addD(anchor,7*dir);
+  if(period==="month") return ymd(new Date(d.getFullYear(),d.getMonth()+dir,Math.min(d.getDate(),28)));
+  return ymd(new Date(d.getFullYear()+dir,d.getMonth(),Math.min(d.getDate(),28)));
+}
+function rangeLabel(period,rg){
+  const d=parse(rg.from);
+  if(period==="day") return lang==="ja"?`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${T.ja.days_short[(d.getDay()+6)%7]}）`:`${T.en.days_short[(d.getDay()+6)%7]} ${rg.from}`;
+  if(period==="week") return `${rg.from} – ${rg.to}`;
+  if(period==="month") return lang==="ja"?`${d.getFullYear()}年${d.getMonth()+1}月`:`${T.en.months_short[d.getMonth()]} ${d.getFullYear()}`;
+  return lang==="ja"?`${d.getFullYear()}年`:`${d.getFullYear()}`;
+}
+/* buckets: returns {labels, keyOf(rec or date+time)} */
+function buckets(period,rg){
+  if(period==="day"){return {unit:t("b_hour"),labels:[...Array(24)].map((_,h)=>`${pad(h)}:00`),key:(date,time)=>+time.slice(0,2)};}
+  if(period==="year"){return {unit:t("b_month"),labels:T[lang].months_short.slice(),key:(date)=>+date.slice(5,7)-1};}
+  const days=[];for(let d=rg.from;d<=rg.to;d=addD(d,1))days.push(d);
+  return {unit:t("b_day"),labels:days.map(d=>{const x=parse(d);return period==="week"?`${T[lang].days_short[(x.getDay()+6)%7]} ${x.getMonth()+1}/${x.getDate()}`:`${x.getDate()}`;}),key:(date)=>days.indexOf(date)};
+}
+
+/* =================== charts =================== */
+let charts={};
+const CHART_TITLES={};
+function destroyCharts(){Object.values(charts).forEach(c=>{try{c.chart.destroy();}catch(e){}});charts={};}
+if(window.Chart){
+  Chart.defaults.font.family='"BIZ UDPGothic",system-ui,sans-serif';
+  Chart.defaults.font.size=11;
+  Chart.defaults.color="#666";
+  Chart.defaults.borderColor="#eceeed";
+  Chart.defaults.plugins.legend.labels.boxWidth=10;
+  Chart.defaults.plugins.legend.labels.boxHeight=10;
+  Chart.defaults.plugins.legend.position="bottom";
+  Chart.defaults.plugins.tooltip.backgroundColor="#233A66";Chart.defaults.plugins.tooltip.cornerRadius=2;
+  Chart.defaults.maintainAspectRatio=false;
+}
+function chartCard(id,title,sub,tall){
+  CHART_TITLES[id]=title;
+  return `<div class="card"><div class="card-h"><div><h3>${title}</h3><div class="s">${sub}</div></div>
+   <button class="btn link" data-tbl="${id}">${t("show_table")}</button></div>
+   <div class="chartbox ${tall==="x"?"xtall":tall?"tall":""}" id="box-${id}"><canvas id="${id}"></canvas></div><div id="tbl-${id}" class="scroll" style="display:none;max-height:${tall?320:260}px;overflow:auto"></div></div>`;
+}
+function mkChart(id,config){
+  const el=document.getElementById(id); if(!el) return;
+  if(!window.Chart){document.getElementById("box-"+id).innerHTML=`<div class="empty">Chart library failed to load.</div>`;return;}
+  charts[id]={chart:new Chart(el,config),config};
+}
+function bindTableToggles(){
+  document.querySelectorAll("[data-tbl]").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.tbl, box=$("#box-"+id), tb=$("#tbl-"+id), c=charts[id]; if(!c) return;
+    const showing=tb.style.display!=="none";
+    if(showing){tb.style.display="none";box.style.display="";b.textContent=t("show_table");return;}
+    const {labels,datasets}=c.config.data;
+    tb.innerHTML=`<table><tr><th></th>${datasets.map(d=>`<th class="num">${esc(d.label)}</th>`).join("")}</tr>${labels.map((l,i)=>`<tr><td>${esc(l)}</td>${datasets.map(d=>`<td class="num">${d.data[i]==null?"—":(+d.data[i]).toLocaleString(undefined,{maximumFractionDigits:1})}</td>`).join("")}</tr>`).join("")}</table>`;
+    tb.style.display="";box.style.display="none";b.textContent=t("show_chart");
+  });
+}
+const barDS=(label,data,color,extra={})=>({label,data,backgroundColor:color,borderRadius:4,borderSkipped:"start",maxBarThickness:28,...extra});
+const lineDS=(label,data,color)=>({label,data,borderColor:color,backgroundColor:color,borderWidth:2,pointRadius:data.length>40?0:3,pointHoverRadius:5,tension:.25,spanGaps:true});
+const lineOpts=(extra={})=>({interaction:{mode:"index",intersect:false},plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}},...extra}});
+const hBarOpts=(extra={})=>({indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,...extra},y:{grid:{display:false}}}});
+
+/* =================== state & nav =================== */
+const NAV=[[null,["dash"]],["g_rec",["daily","check","hour","wt","rec"]],["g_mgmt",["res","staff","plan","bill"]],["g_conn",["iot","msg","fam"]],[null,["set"]]];
+const ICON={dash:"chart-column",daily:"calendar-day",check:"toilet",hour:"clock",wt:"weight-scale",rec:"pen-to-square",res:"users",staff:"user-nurse",plan:"clipboard-list",bill:"yen-sign",iot:"bed",msg:"comments",fam:"house-user",set:"gear"};
+const VIEWS=Object.keys(ICON).map(k=>[k]);
+let view="dash";
+let S={period:"week",anchor:TODAY,dRes:"",dStaff:"",daily:TODAY,dailyStaff:"",
+       rRes:"",rType:"",rStaff:"",rFrom:TODAY,rTo:TODAY,newType:"vital",newRes:"r1",newBy:"s1",
+       billMonth:TODAY.slice(0,7),famRes:"r1"};
+const V={};
+
+/* =================== DASHBOARD =================== */
+function stats(rg){
+  let recs=recsRange(rg.from,rg.to);
+  if(S.dRes) recs=recs.filter(r=>r.rid===S.dRes);
+  if(S.dStaff) recs=recs.filter(r=>r.by===S.dStaff);
+  const meals=recs.filter(r=>r.type==="meal");
+  let hours=0; const onDuty=new Set();
+  for(let d=rg.from;d<=rg.to&&d<=TODAY;d=addD(d,1)) dayAtt(d).forEach(a=>{if(S.dStaff&&a.sid!==S.dStaff)return;hours+=attHours(a,d);onDuty.add(a.sid);});
+  return {recs,n:recs.length,alerts:recs.filter(isAlert).length,meal:meals.length?meals.reduce((a,b)=>a+b.v.amt,0)/meals.length:null,
+    baths:recs.filter(r=>r.type==="bath").length,hours,res:new Set(recs.map(r=>r.rid)).size,staff:onDuty.size};
+}
+function delta(cur,prev,isPts,goodUp=true){
+  if(prev==null||cur==null) return "";
+  if(isPts){const d=cur-prev;const cls=d===0?"":((d>0)===goodUp?"up":"down");return `<div class="d ${cls}">${d>=0?"▲":"▼"} ${Math.abs(d).toFixed(1)} ${t("pts")} ${t("vs_prev")}</div>`;}
+  if(!prev) return `<div class="d">— ${t("vs_prev")}</div>`;
+  const p=(cur-prev)/prev*100;const cls=Math.abs(p)<.5?"":((p>0)===goodUp?"up":"down");
+  return `<div class="d ${cls}">${p>=0?"▲":"▼"} ${Math.abs(p).toFixed(0)}% ${t("vs_prev")}</div>`;
+}
+V.dash=()=>{
+  const rg=rangeOf(S.period,S.anchor);
+  const pr=rangeOf(S.period,shiftAnchor(S.period,S.anchor,-1));
+  // compare like-for-like: if the current period is still in progress, cut the previous one to the same length
+  if(rg.to>TODAY){const el=Math.round((parse(TODAY)-parse(rg.from))/864e5);const cut=addD(pr.from,el);if(cut<pr.to)pr.to=cut;}
+  const cur=stats(rg);
+  const prev = pr.from<HIST_START ? {n:null,alerts:null,meal:null,baths:null,hours:null} : stats(pr); // no comparison when history doesn't cover it
+  const al=cur.recs.filter(isAlert).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).slice(0,8);
+  const tile=(n,l,d,color)=>`<div class="card stat"><div class="n" style="${color?`color:${color}`:""}">${n}</div><div class="l">${l}</div>${d||""}</div>`;
+  const b=buckets(S.period,rg);
+  return `<h2>${t("nav_dash")}</h2><p class="desc">${t("dash_d")}</p>
+  <div class="toolbar">
+    <div style="min-width:auto"><label>${t("period")}</label><div class="seg">${["day","week","month","year"].map(p=>`<button data-p="${p}" class="${S.period===p?"on":""}">${t("p_"+p)}</button>`).join("")}</div></div>
+    <div style="min-width:auto"><label>${t("date")}</label><div style="display:flex;gap:6px;align-items:center">
+      <button class="btn ghost sm" id="dPrev">${t("prev")}</button><input type="date" id="dAnchor" value="${S.anchor}" max="${TODAY}" style="width:150px">
+      <button class="btn ghost sm" id="dNext" ${rg.to>=TODAY?"disabled":""}>${t("next")}</button><button class="btn ghost sm" id="dToday">${t("today")}</button></div></div>
+    <div><label>${t("resident")}</label><select id="dRes">${resOpts(S.dRes,true)}</select></div>
+    <div><label>${t("staff")}</label><select id="dStaff">${staffOpts(S.dStaff,true)}</select></div>
+    <div class="range" style="min-width:auto">${rangeLabel(S.period,rg)}</div>
+  </div>
+  <div class="grid g6">
+    ${tile(cur.n.toLocaleString(),t("k_rec"),delta(cur.n,prev.n,false))}
+    ${tile(cur.alerts,t("k_alert"),delta(cur.alerts,prev.alerts,false,false),cur.alerts?"var(--bad)":"")}
+    ${tile(cur.meal==null?"—":cur.meal.toFixed(0)+"%",t("k_meal"),delta(cur.meal,prev.meal,true))}
+    ${tile(cur.baths,t("k_bath"),delta(cur.baths,prev.baths,false))}
+    ${tile(Math.round(cur.hours).toLocaleString()+"h",t("k_hours"),delta(cur.hours,prev.hours,false))}
+    ${tile(`${cur.res} / ${db.res.length}`,t("k_res"))}
+  </div>
+  <div class="grid g2" style="margin-top:14px">
+    ${chartCard("cTrend",t("c_trend"),t("c_trend_s",{b:b.unit}),true)}
+    ${chartCard("cType",t("c_type"),t("c_type_s"),true)}
+    ${chartCard("cTemp",t("c_temp"),t("c_temp_s",{b:b.unit}))}
+    ${chartCard("cBp",t("c_bp"),t("c_bp_s",{b:b.unit}))}
+    ${chartCard("cSpo2",t("c_spo2"),t("c_spo2_s",{b:b.unit}))}
+    ${chartCard("cMeal",t("c_meal"),t("c_meal_s"),"x")}
+    ${chartCard("cSrec",t("c_srec"),t("c_srec_s"))}
+    ${chartCard("cShours",t("c_shours"),t("c_shours_s"))}
+    ${chartCard("cAlert",t("c_alert"),t("c_alert_s"),"x")}
+    ${chartCard("cLvl",t("c_lvl"),t("c_lvl_s"))}
+  </div>
+  <div class="card" style="margin-top:14px"><h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--shu)" aria-hidden="true"></i> ${t("alerts")}</h3>
+    ${al.length?`<table><tr><th>${t("date")}</th><th>${t("resident")}</th><th>${t("detail")}</th><th>${t("by")}</th></tr>${al.map(r=>`<tr><td>${r.date} ${r.time}</td><td>${esc(rname(r.rid))}</td><td><span class="tag bad">${vitalFlags(r.v).map(esc).join(" · ")}</span></td><td>${esc(staffName(r.by))}</td></tr>`).join("")}</table>`:`<div class="empty">${t("no_alert")}</div>`}
+  </div>`;
+};
+V.dash.after=()=>{
+  document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{S.period=b.dataset.p;render();});
+  $("#dPrev").onclick=()=>{S.anchor=shiftAnchor(S.period,S.anchor,-1);render();};
+  $("#dNext").onclick=()=>{const n=shiftAnchor(S.period,S.anchor,1);S.anchor=n>TODAY?TODAY:n;render();};
+  $("#dToday").onclick=()=>{S.anchor=TODAY;render();};
+  $("#dAnchor").onchange=e=>{if(e.target.value){S.anchor=e.target.value>TODAY?TODAY:e.target.value;render();}};
+  $("#dRes").onchange=e=>{S.dRes=e.target.value;render();};
+  $("#dStaff").onchange=e=>{S.dStaff=e.target.value;render();};
+  const rg=rangeOf(S.period,S.anchor), b=buckets(S.period,rg), cur=stats(rg), recs=cur.recs, N=b.labels.length;
+  // trend stacked
+  const byType={};TYPES.forEach(ty=>byType[ty]=Array(N).fill(0));
+  const tempS=Array(N).fill(0),tempC=Array(N).fill(0),bpsS=Array(N).fill(0),bpdS=Array(N).fill(0),bpC=Array(N).fill(0),spS=Array(N).fill(0),spC=Array(N).fill(0);
+  recs.forEach(r=>{const k=b.key(r.date,r.time);if(k<0||k>=N)return;byType[r.type][k]++;
+    if(r.type==="vital"){tempS[k]+=r.v.temp;tempC[k]++;bpsS[k]+=r.v.bps;bpdS[k]+=r.v.bpd;bpC[k]++;spS[k]+=r.v.spo2;spC[k]++;}});
+  mkChart("cTrend",{type:"bar",data:{labels:b.labels,datasets:TYPES.map(ty=>barDS(t(ty),byType[ty],typeColor(ty),{borderRadius:0,borderColor:"#fff",borderWidth:{top:1},maxBarThickness:40}))},
+    options:{interaction:{mode:"index",intersect:false},scales:{x:{stacked:true,grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}},y:{stacked:true,beginAtZero:true}}}});
+  mkChart("cType",{type:"bar",data:{labels:TYPES.map(t),datasets:[barDS(t("records"),TYPES.map(ty=>byType[ty].reduce((a,c)=>a+c,0)),TYPES.map(typeColor))]},options:hBarOpts()});
+  const avg=(s,c)=>s.map((v,i)=>c[i]?+(v/c[i]).toFixed(1):null);
+  mkChart("cTemp",{type:"line",data:{labels:b.labels,datasets:[lineDS(t("temp"),avg(tempS,tempC),PAL[0])]},options:lineOpts({y:{suggestedMin:36,suggestedMax:37.5}})});
+  const bpO=lineOpts({y:{suggestedMin:60,suggestedMax:160}});bpO.plugins.legend={display:true};
+  mkChart("cBp",{type:"line",data:{labels:b.labels,datasets:[lineDS(t("bp_s"),avg(bpsS,bpC),PAL[0]),lineDS(t("bp_d"),avg(bpdS,bpC),PAL[1])]},options:bpO});
+  mkChart("cSpo2",{type:"line",data:{labels:b.labels,datasets:[lineDS("SpO2",avg(spS,spC),PAL[2])]},options:lineOpts({y:{suggestedMin:90,suggestedMax:100}})});
+  // meal by resident
+  const rs=db.res.filter(r=>!S.dRes||r.id===S.dRes);
+  const mealAvg=rs.map(r=>{const m=recs.filter(x=>x.rid===r.id&&x.type==="meal");return m.length?+(m.reduce((a,c)=>a+c.v.amt,0)/m.length).toFixed(1):null;});
+  mkChart("cMeal",{type:"bar",data:{labels:rs.map(r=>rname(r.id)),datasets:[barDS(t("k_meal"),mealAvg,PAL[0])]},options:hBarOpts({max:100})});
+  // staff
+  const ss=db.staff.filter(s=>!S.dStaff||s.id===S.dStaff);
+  mkChart("cSrec",{type:"bar",data:{labels:ss.map(s=>staffName(s.id)),datasets:[barDS(t("records"),ss.map(s=>recs.filter(r=>r.by===s.id).length),PAL[0])]},options:hBarOpts()});
+  const hrs=ss.map(s=>{let h=0;for(let d=rg.from;d<=rg.to&&d<=TODAY;d=addD(d,1))dayAtt(d).forEach(a=>{if(a.sid===s.id)h+=attHours(a,d);});return +h.toFixed(1);});
+  mkChart("cShours",{type:"bar",data:{labels:ss.map(s=>staffName(s.id)),datasets:[barDS(t("hours"),hrs,PAL[1])]},options:hBarOpts()});
+  mkChart("cAlert",{type:"bar",data:{labels:rs.map(r=>rname(r.id)),datasets:[barDS(t("k_alert"),rs.map(r=>recs.filter(x=>x.rid===r.id&&isAlert(x)).length),PAL[7])]},options:hBarOpts({ticks:{precision:0}})});
+  const lv=["s1","s2","1","2","3","4","5"];
+  mkChart("cLvl",{type:"bar",data:{labels:lv.map(levelLabel),datasets:[barDS(t("resident"),lv.map(l=>db.res.filter(r=>r.level===l).length),PAL[0])]},options:{plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0}}}}});
+};
+
+/* =================== DAILY RECORDS =================== */
+V.daily=()=>{
+  const d=S.daily, recs=dayRecs(d), att=dayAtt(d), x=parse(d);
+  const dl=lang==="ja"?`${x.getFullYear()}年${x.getMonth()+1}月${x.getDate()}日（${T.ja.days_short[(x.getDay()+6)%7]}）`:`${T.en.days_short[(x.getDay()+6)%7]}, ${d}`;
+  const hours=att.reduce((a,c)=>a+attHours(c,d),0);
+  const tile=(n,l,c)=>`<div class="card stat"><div class="n" style="${c?`color:${c}`:""}">${n}</div><div class="l">${l}</div></div>`;
+  const al=recs.filter(isAlert).length;
+  // staff table
+  const staffRows=db.staff.map(s=>{
+    const a=att.find(z=>z.sid===s.id); const nrec=recs.filter(r=>r.by===s.id).length;
+    let st,cls; if(!a){st=d===TODAY&&nowMin()<SHIFTS[s.shift][0]?"st_wait":"st_off";cls="gray";} else if(!a.out){st="st_on";cls="ok";} else {st="st_done";cls="";}
+    let act=""; if(d===TODAY){ if(!a) act=`<button class="btn sm" onclick="clockIn('${s.id}')">${t("clock_in")}</button>`; else if(!a.out) act=`<button class="btn sm ghost" onclick="clockOut('${s.id}')">${t("clock_out")}</button>`; }
+    return `<tr><td><b>${esc(staffName(s.id))}</b></td><td>${t(s.role)}</td><td>${t("sh_"+s.shift)}</td><td>${a?.in||"—"}</td><td>${a?.out||"—"}</td>
+      <td class="num">${a?attHours(a,d).toFixed(1):"—"}</td><td class="num">${nrec}</td><td><span class="tag ${cls}">${t(st)}</span></td><td>${act}</td></tr>`;}).join("");
+  // resident table
+  const resRows=db.res.map(r=>{
+    const rr=recs.filter(z=>z.rid===r.id); if(!rr.length) return `<tr style="color:var(--muted)"><td>${esc(r.room)}</td><td>${esc(rname(r.id))}</td><td colspan="10">—</td></tr>`;
+    const v=rr.filter(z=>z.type==="vital").pop(); const m=rr.filter(z=>z.type==="meal");
+    const fl=v?vitalFlags(v.v):[];
+    return `<tr><td>${esc(r.room)}</td><td><b>${esc(rname(r.id))}</b></td>
+     <td class="num">${v?v.v.temp:"—"}</td><td class="num">${v?`${v.v.bps}/${v.v.bpd}`:"—"}</td><td class="num">${v?v.v.spo2:"—"}</td>
+     <td class="num">${m.length?`${m.length}× ${Math.round(m.reduce((a,c)=>a+c.v.amt,0)/m.length)}%`:"—"}</td>
+     <td class="num">${rr.reduce((a,c)=>a+fluidMl(c),0)||"—"}</td>
+     <td class="num">${rr.filter(z=>z.type==="excretion").length}</td>
+     <td>${rr.some(z=>z.type==="bath")?"✔":"—"}</td>
+     <td>${rr.filter(z=>z.type==="med").every(z=>z.v.given)&&rr.some(z=>z.type==="med")?"✔":rr.some(z=>z.type==="med")?"✗":"—"}</td>
+     <td>${fl.length?`<span class="tag bad">${fl.map(esc).join(", ")}</span>`:`<span class="tag ok">OK</span>`}</td>
+     <td><button class="btn sm ghost" onclick="resDay('${r.id}')">${t("detail")}</button></td></tr>`;}).join("");
+  const tl=recs.filter(r=>!S.dailyStaff||r.by===S.dailyStaff).sort((a,b)=>b.time.localeCompare(a.time));
+  return `<h2>${t("nav_daily")}</h2><p class="desc">${t("daily_d")}</p>
+  <div class="toolbar">
+    <div style="min-width:auto"><label>${t("date")}</label><div style="display:flex;gap:6px;align-items:center">
+      <button class="btn ghost sm" id="yPrev">${t("prev")}</button><input type="date" id="yDate" value="${d}" min="${HIST_START}" max="${TODAY}" style="width:150px">
+      <button class="btn ghost sm" id="yNext" ${d>=TODAY?"disabled":""}>${t("next")}</button><button class="btn ghost sm" id="yToday">${t("today")}</button></div></div>
+    <div class="range" style="min-width:auto">${dl}</div>
+  </div>
+  <div class="grid g6">
+    ${tile(att.length,t("k_staff"))}${tile(new Set(recs.map(r=>r.rid)).size+" / "+db.res.length,t("k_res"))}
+    ${tile(recs.length,t("k_rec"))}${tile(al,t("k_alert"),al?"var(--bad)":"")}${tile(hours.toFixed(1)+"h",t("k_hours"))}
+  </div>
+  <div class="sheet" style="margin-top:14px">${sheetTop(t("staff_duty"),`${t("k_staff")}: ${att.length} / ${db.staff.length}`,dl,"daily|"+d)}<div class="scroll"><table>
+    <tr><th>${t("staff")}</th><th>${t("role")}</th><th>${t("shift")}</th><th>${t("clock_in")}</th><th>${t("clock_out")}</th><th class="num">${t("hours")}</th><th class="num">${t("records")}</th><th>${t("status")}</th><th></th></tr>${staffRows}</table></div></div>
+  <div class="sheet" style="margin-top:14px">${sheetTop(t("res_summary"),t("ck_all",{n:db.res.length}),dl)}<div class="scroll"><table>
+    <tr><th>${t("room")}</th><th>${t("resident")}</th><th class="num">${lang==="ja"?"体温":"Temp"}</th><th class="num">BP</th><th class="num">SpO2</th><th class="num">${t("meals")}</th><th class="num">${t("fluid")} ml</th><th class="num">${t("exc_n")}</th><th>${t("baths")}</th><th>${t("meds")}</th><th>${t("status")}</th><th></th></tr>${resRows}</table></div></div>
+  <div class="sheet" style="margin-top:14px"><div class="ck-head"><span>${t("count_n",{n:tl.length})}</span><h3>${t("timeline")}</h3><span class="rt"><span style="width:200px"><select id="yStaff" aria-label="${t("staff")}">${staffOpts(S.dailyStaff,true)}</select></span></span></div>
+    <div class="tl"><table><tr><th>${t("time")}</th><th>${t("resident")}</th><th>${t("type")}</th><th>${t("detail")}</th><th>${t("by")}</th></tr>
+    ${tl.map(r=>`<tr><td>${r.time}</td><td>${esc(rname(r.rid))}</td><td>${typeTag(r.type)}</td><td>${recSummary(r)}${isAlert(r)?' <span class="tag bad">!</span>':""}${r.memo?`<div style="color:var(--muted)">${esc(r.memo)}</div>`:""}</td><td>${esc(staffName(r.by))}</td></tr>`).join("")||`<tr><td colspan="5" class="empty">${t("nodata")}</td></tr>`}</table></div></div>`;
+};
+V.daily.after=()=>{
+  $("#yPrev").onclick=()=>{if(S.daily>HIST_START){S.daily=addD(S.daily,-1);render();}};
+  $("#yNext").onclick=()=>{if(S.daily<TODAY){S.daily=addD(S.daily,1);render();}};
+  $("#yToday").onclick=()=>{S.daily=TODAY;render();};
+  $("#yDate").onchange=e=>{if(e.target.value){S.daily=e.target.value>TODAY?TODAY:e.target.value;render();}};
+  $("#yStaff").onchange=e=>{S.dailyStaff=e.target.value;render();};
+};
+window.clockIn=sid=>{db.att[`${TODAY}|${sid}`]={in:fromMin(nowMin()),out:null};save();render();toast(t("saved"));};
+window.clockOut=sid=>{const a=dayAtt(TODAY).find(z=>z.sid===sid);db.att[`${TODAY}|${sid}`]={in:a.in,out:fromMin(nowMin())};save();render();toast(t("saved"));};
+window.resDay=rid=>{
+  const rr=dayRecs(S.daily).filter(r=>r.rid===rid).sort((a,b)=>a.time.localeCompare(b.time));
+  openModal(`<h3>${esc(rname(rid))} — ${S.daily}</h3><table><tr><th>${t("time")}</th><th>${t("type")}</th><th>${t("detail")}</th><th>${t("by")}</th></tr>
+  ${rr.map(r=>`<tr><td>${r.time}</td><td>${typeTag(r.type)}</td><td>${recSummary(r)}${isAlert(r)?' <span class="tag bad">!</span>':""}${r.memo?`<div style="color:var(--muted)">${esc(r.memo)}</div>`:""}</td><td>${esc(staffName(r.by))}</td></tr>`).join("")}</table>
+  <div style="text-align:right;margin-top:12px"><button class="btn" onclick="closeModal()">OK</button></div>`);
+};
+
+/* =================== CARE RECORDS =================== */
+function recFields(type){
+  const n=(k,ph,st)=>`<div><label>${t(k)}</label><input name="${k}" type="number" step="${st||1}" placeholder="${ph||""}"></div>`;
+  switch(type){
+    case "meal":return `<div class="row">${n("meal_amt","80")}${n("water","200")}</div>`;
+    case "excretion":return `<div class="row"><div><label>${t("urine")}</label><select name="u"><option value="1">1</option><option value="0">0</option></select></div><div><label>${t("stool")}</label><select name="s"><option value="0">0</option><option value="1">1</option></select></div>
+      <div><label>&nbsp;</label><label style="display:flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" name="g" style="width:auto"> ✓ ${t("guided")}</label></div>
+      <div><label>&nbsp;</label><label style="display:flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" name="i" style="width:auto"> △ ${t("incont")}</label></div></div>`;
+    case "fluid":return `<div class="row"><div><label>${t("water")}</label><input name="ml" type="number" step="10" placeholder="150"></div></div>`;
+    case "bath":return `<div class="row"><div><label>${t("bath_type")}</label><select name="bath"><option value="full">${t("full")}</option><option value="shower">${t("shower")}</option><option value="wipe">${t("wipe")}</option></select></div></div>`;
+    case "vital":return `<div class="row">${n("temp","36.5",".1")}${n("bp_s","120")}${n("bp_d","80")}${n("pulse","70")}${n("spo2","97")}</div>`;
+    case "med":return `<div class="row"><div><label>${t("med_name")}</label><input name="med_name"></div><div><label>${t("given")}</label><select name="given"><option value="1">✔</option><option value="0">✗</option></select></div></div>`;
+    default:return "";
+  }
+}
+V.rec=()=>{
+  let list=recsRange(S.rFrom<HIST_START?HIST_START:S.rFrom,S.rTo);
+  if(S.rRes) list=list.filter(r=>r.rid===S.rRes);
+  if(S.rType) list=list.filter(r=>r.type===S.rType);
+  if(S.rStaff) list=list.filter(r=>r.by===S.rStaff);
+  list.sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+  const total=list.length; list=list.slice(0,300);
+  const nm=nowMin();
+  return `<h2>${t("nav_rec")}</h2><p class="desc">${t("rec_d")}</p>
+  <div class="card" style="margin-bottom:14px"><h3>${t("new_rec")}</h3>
+    <form id="recf">
+     <div class="row"><div><label>${t("resident")}</label><select name="rid" id="newRes">${resOpts(S.newRes)}</select></div>
+      <div><label>${t("type")}</label><select name="type" id="newType">${TYPES.map(x=>`<option value="${x}" ${x===S.newType?"selected":""}>${t(x)}</option>`).join("")}</select></div>
+      <div><label>${t("by")}</label><select name="by" id="newBy">${staffOpts(S.newBy)}</select></div>
+      <div><label>${t("time")}</label><input type="time" name="time" value="${S.newTime||fromMin(nm)}"></div></div>
+     <div id="recFields">${recFields(S.newType)}</div>
+     <div><label>${t("memo")}</label><textarea name="memo" id="memo"></textarea></div>
+     <div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap">
+      <button type="button" class="btn ghost sm" id="voiceBtn">${t("voice")}</button>
+      <label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--ink)"><input type="checkbox" name="share" style="width:auto"> ${t("share")}</label>
+      <span style="flex:1"></span><button class="btn">${t("save")}</button></div>
+     <p class="note">${t("voice_note")}</p>
+    </form></div>
+  <div class="toolbar">
+    <div><label>${t("from")}</label><input type="date" id="rFrom" value="${S.rFrom}" min="${HIST_START}" max="${TODAY}"></div>
+    <div><label>${t("to")}</label><input type="date" id="rTo" value="${S.rTo}" min="${HIST_START}" max="${TODAY}"></div>
+    <div><label>${t("resident")}</label><select id="rRes">${resOpts(S.rRes,true)}</select></div>
+    <div><label>${t("type")}</label><select id="rType"><option value="">${t("all")}</option>${TYPES.map(x=>`<option value="${x}" ${x===S.rType?"selected":""}>${t(x)}</option>`).join("")}</select></div>
+    <div><label>${t("staff")}</label><select id="rStaff">${staffOpts(S.rStaff,true)}</select></div>
+  </div>
+  <div class="sheet">${sheetTop(t("list_rec"),t("showing",{n:list.length,t:total.toLocaleString()}),`${S.rFrom} – ${S.rTo}`)}<div class="tl" style="max-height:560px"><table>
+    <tr><th>${t("date")}</th><th>${t("resident")}</th><th>${t("type")}</th><th>${t("detail")}</th><th>${t("by")}</th><th></th></tr>
+    ${list.map(r=>`<tr><td style="white-space:nowrap">${r.date} ${r.time}</td><td>${esc(rname(r.rid))}</td><td>${typeTag(r.type)}${isAlert(r)?' <span class="tag bad">!</span>':""}</td>
+     <td>${recSummary(r)}${r.memo?`<div style="color:var(--muted)">${esc(r.memo)}</div>`:""}${r.share?` <span class="tag gray" title="${t("share_lbl")}"><i class="fa-solid fa-house-user" aria-hidden="true"></i></span>`:""}</td><td>${esc(staffName(r.by))}</td>
+     <td><button class="btn sm danger" onclick="recDel('${r.id}')" aria-label="${t("del")}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></td></tr>`).join("")||`<tr><td colspan="6" class="empty">${t("nodata")}</td></tr>`}
+  </table></div></div>`;
+};
+V.rec.after=()=>{
+  S.newTime=null;
+  $("#newType").onchange=e=>{S.newType=e.target.value;$("#recFields").innerHTML=recFields(S.newType);};
+  $("#newRes").onchange=e=>S.newRes=e.target.value;
+  $("#newBy").onchange=e=>S.newBy=e.target.value;
+  [["rFrom","rFrom"],["rTo","rTo"],["rRes","rRes"],["rType","rType"],["rStaff","rStaff"]].forEach(([id,k])=>$("#"+id).onchange=e=>{S[k]=e.target.value||(k==="rFrom"?HIST_START:k==="rTo"?TODAY:"");render();});
+  $("#voiceBtn").onclick=()=>{const s=lang==="ja"?["昼食はほぼ完食。表情穏やか。","午後、居室で休まれていました。","水分補給を促し、200ml摂取。"]:["Ate most of lunch. Calm expression.","Rested in room in the afternoon.","Encouraged hydration, drank 200ml."];$("#memo").value=s[Math.floor(Math.random()*s.length)];};
+  $("#recf").onsubmit=e=>{
+    e.preventDefault();const f=Object.fromEntries(new FormData(e.target));let v={};
+    switch(f.type){
+      case "meal":v={amt:Math.min(100,+f.meal_amt||0),water:+f.water||0};break;
+      case "excretion":v={u:+f.u,s:+f.s,g:!!f.g,i:!!f.i};break;
+      case "fluid":if(!f.ml){toast(t("required"));return;}v={ml:+f.ml};break;
+      case "bath":v={bath:f.bath};break;
+      case "vital":if(!f.temp||!f.bp_s){toast(t("required"));return;}v={temp:+f.temp,bps:+f.bp_s,bpd:+f.bp_d||0,pulse:+f.pulse||0,spo2:+f.spo2||0};break;
+      case "med":if(!f.med_name.trim()){toast(t("required"));return;}v={name:f.med_name,given:f.given==="1"};break;
+    }
+    if(f.type==="note"&&!f.memo.trim()){toast(t("required"));return;}
+    db.userRec.push({id:"u-"+uid(),rid:f.rid,date:TODAY,time:f.time||fromMin(nowMin()),type:f.type,v,memo:f.memo,share:!!f.share,by:f.by});
+    buildUserIdx();save();render();toast(t("saved"));
+  };
+};
+window.recDel=id=>{if(id.startsWith("u-")){db.userRec=db.userRec.filter(r=>r.id!==id);buildUserIdx();}else db.deleted[id]=1;save();render();toast(t("deleted"));};
+
+/* =================== RESIDENTS =================== */
+V.res=()=>`<h2>${t("nav_res")}</h2><p class="desc">${t("res_d")}</p>
+  <div style="margin-bottom:12px"><button class="btn" onclick="resForm()">${t("add_res")}</button></div>
+  <div class="sheet">${sheetTop(t("list_res"),t("ck_all",{n:db.res.length}),fmtDay(TODAY))}<div class="scroll"><table>
+  <tr><th>${t("room")}</th><th>${t("resident")}</th><th>${t("level")}</th><th>${t("service")}</th><th>${t("dob")}</th><th>${t("family")}</th><th>${t("actions")}</th></tr>
+  ${db.res.map(r=>`<tr><td>${esc(r.room)}</td><td><b>${esc(lang==="ja"?r.ja:r.en)}</b><br><span style="color:var(--muted);font-size:12px">${esc(lang==="ja"?r.en:r.ja)}</span></td>
+   <td><span class="tag">${levelLabel(r.level)}</span></td><td>${t(r.svc)}</td><td>${esc(r.dob)}</td><td>${esc(r.fam)}</td>
+   <td style="white-space:nowrap"><button class="btn sm ghost" onclick="resForm('${r.id}')">${t("edit")}</button> <button class="btn sm danger" onclick="askDel('res','${r.id}')">${t("del")}</button></td></tr>`).join("")||`<tr><td colspan="7" class="empty">${t("nodata")}</td></tr>`}
+  </table></div></div>`;
+window.resForm=id=>{
+  const r=db.res.find(x=>x.id===id)||{en:"",ja:"",room:"",level:"1",svc:"svc_fac",dob:"",fam:"",ht:""};
+  const lv=["s1","s2","1","2","3","4","5"],sv=["svc_fac","svc_day","svc_home","svc_short","svc_gh"];
+  openModal(`<h3>${id?t("edit"):t("add_res")}</h3><form id="rf">
+   <div class="row"><div><label>${t("name_en")} *</label><input name="en" value="${esc(r.en)}"></div><div><label>${t("name_ja")} *</label><input name="ja" value="${esc(r.ja)}"></div></div>
+   <div class="row"><div><label>${t("room")}</label><input name="room" value="${esc(r.room)}"></div><div><label>${t("level")}</label><select name="level">${lv.map(l=>`<option value="${l}" ${l===r.level?"selected":""}>${levelLabel(l)}</option>`).join("")}</select></div></div>
+   <div class="row"><div><label>${t("service")}</label><select name="svc">${sv.map(s=>`<option value="${s}" ${s===r.svc?"selected":""}>${t(s)}</option>`).join("")}</select></div><div><label>${t("dob")}</label><input type="date" name="dob" value="${esc(r.dob)}"></div></div>
+   <div class="row"><div><label>${t("family")}</label><input name="fam" value="${esc(r.fam)}"></div><div><label>${t("height")}</label><input type="number" name="ht" value="${esc(r.ht||"")}"></div></div>
+   <div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn ghost" onclick="closeModal()">${t("cancel")}</button><button class="btn">${t("save")}</button></div></form>`);
+  $("#rf").onsubmit=e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));if(!f.en.trim()||!f.ja.trim()){toast(t("required"));return;}
+    if(id)Object.assign(r,f);else{const nid="r"+uid();db.res.push({id:nid,...f});db.plans[nid]={long:"",short:"",svc:"",review:TODAY};db.copay[nid]=.1;}
+    save();closeModal();render();toast(t("saved"));};
+};
+window.askDel=(kind,id)=>openModal(`<h3>${t("confirm_del")}</h3><p><b>${esc(kind==="res"?rname(id):staffName(id))}</b></p><div style="display:flex;gap:8px;justify-content:flex-end">
+  <button class="btn ghost" onclick="closeModal()">${t("cancel")}</button><button class="btn" style="background:var(--bad)" onclick="doDel('${kind}','${id}')">${t("yes")}</button></div>`);
+window.doDel=(kind,id)=>{if(kind==="res"){db.res=db.res.filter(r=>r.id!==id);delete db.plans[id];}else db.staff=db.staff.filter(s=>s.id!==id);save();closeModal();render();toast(t("deleted"));};
+
+/* =================== STAFF =================== */
+V.staff=()=>{
+  const rg=rangeOf("month",TODAY);const recs=recsRange(rg.from,TODAY);
+  const rows=db.staff.map(s=>{let days=0,h=0;for(let d=rg.from;d<=TODAY;d=addD(d,1)){const a=dayAtt(d).find(z=>z.sid===s.id);if(a){days++;h+=attHours(a,d);}}
+    return `<tr><td><b>${esc(lang==="ja"?s.ja:s.en)}</b><br><span style="color:var(--muted);font-size:12px">${esc(lang==="ja"?s.en:s.ja)}</span></td><td>${t(s.role)}</td><td>${t("sh_"+s.shift)}</td><td>${esc(s.phone)}</td>
+    <td class="num">${days}</td><td class="num">${h.toFixed(1)}</td><td class="num">${recs.filter(r=>r.by===s.id).length}</td>
+    <td style="white-space:nowrap"><button class="btn sm ghost" onclick="staffForm('${s.id}')">${t("edit")}</button> <button class="btn sm danger" onclick="askDel('staff','${s.id}')">${t("del")}</button></td></tr>`;}).join("");
+  return `<h2>${t("nav_staff")}</h2><p class="desc">${t("staff_d")}</p>
+  <div style="margin-bottom:12px"><button class="btn" onclick="staffForm()">${t("add_staff")}</button></div>
+  <div class="sheet">${sheetTop(t("list_staff"),t("staff_n",{n:db.staff.length}),`${rg.from} – ${TODAY}`)}<div class="scroll"><table><tr><th>${t("staff")}</th><th>${t("role")}</th><th>${t("shift")}</th><th>${t("phone")}</th><th class="num">${t("days_worked")}</th><th class="num">${t("hours")}</th><th class="num">${t("records")}</th><th>${t("actions")}</th></tr>${rows||`<tr><td colspan="8" class="empty">${t("nodata")}</td></tr>`}</table></div></div>`;
+};
+window.staffForm=id=>{
+  const s=db.staff.find(x=>x.id===id)||{en:"",ja:"",role:"ro_care",shift:"day",phone:""};
+  openModal(`<h3>${id?t("edit"):t("add_staff")}</h3><form id="sf">
+   <div class="row"><div><label>${t("name_en")} *</label><input name="en" value="${esc(s.en)}"></div><div><label>${t("name_ja")} *</label><input name="ja" value="${esc(s.ja)}"></div></div>
+   <div class="row"><div><label>${t("role")}</label><select name="role">${["ro_care","ro_nurse","ro_mgr","ro_rehab"].map(r=>`<option value="${r}" ${r===s.role?"selected":""}>${t(r)}</option>`).join("")}</select></div>
+     <div><label>${t("shift")}</label><select name="shift">${Object.keys(SHIFTS).map(x=>`<option value="${x}" ${x===s.shift?"selected":""}>${t("sh_"+x)}</option>`).join("")}</select></div>
+     <div><label>${t("phone")}</label><input name="phone" value="${esc(s.phone)}"></div></div>
+   <div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn ghost" onclick="closeModal()">${t("cancel")}</button><button class="btn">${t("save")}</button></div></form>`);
+  $("#sf").onsubmit=e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));if(!f.en.trim()||!f.ja.trim()){toast(t("required"));return;}
+    if(id)Object.assign(s,f);else db.staff.push({id:"s"+uid(),...f});save();closeModal();render();toast(t("saved"));};
+};
+
+/* =================== CARE PLANS =================== */
+function forecast(rid){
+  const recs=recsRange(addD(TODAY,-30),TODAY).filter(r=>r.rid===rid);
+  const bad=recs.filter(isAlert).length;const m=recs.filter(r=>r.type==="meal");
+  const avg=m.length?m.reduce((a,c)=>a+c.v.amt,0)/m.length:80;
+  const lv=parseInt(db.res.find(x=>x.id===rid)?.level)||1;
+  const sc=(bad>=3?2:bad>=1?1:0)+(avg<60?2:avg<75?1:0)+(lv>=4?1:0);
+  return sc>=3?"f_risk":sc>=1?"f_watch":"f_stable";
+}
+V.plan=()=>`<h2>${t("nav_plan")}</h2><p class="desc">${t("plan_d")}</p>
+  <div class="sheet">${sheetTop(t("list_plan"),t("ck_all",{n:db.res.length}),fmtDay(TODAY))}<div class="scroll"><table>
+  <tr><th>No</th><th>${t("resident")}</th><th>${t("level")}</th><th>${t("long_goal")}</th><th>${t("short_goal")}</th><th>${t("services")}</th><th>${t("review")}</th><th>${t("forecast")}</th><th></th></tr>
+  ${db.res.map((r,i)=>{const p=db.plans[r.id]||{};const f=forecast(r.id);const dt=Math.ceil((parse(p.review||TODAY)-parse(TODAY))/864e5);
+   return `<tr><td style="text-align:center">${i+1}</td><td style="white-space:nowrap"><b>${esc(rname(r.id))}</b></td><td style="white-space:nowrap">${levelLabel(r.level)}</td><td>${esc(p.long)||"—"}</td><td>${esc(p.short)||"—"}</td><td>${esc(p.svc)||"—"}</td>
+   <td style="white-space:nowrap">${esc(p.review||"—")} ${p.review&&dt<=7?`<span class="tag warn">${dt}d</span>`:""}</td><td><span class="tag ${f==="f_risk"?"bad":f==="f_watch"?"warn":"ok"}">${t(f)}</span></td>
+   <td><button class="btn sm ghost" onclick="planForm('${r.id}')">${t("edit")}</button></td></tr>`;}).join("")}
+  </table></div><p class="note">${t("forecast")}: ${t("f_why")}</p></div>`;
+window.planForm=id=>{const p=db.plans[id]||(db.plans[id]={long:"",short:"",svc:"",review:TODAY});
+  openModal(`<h3>${t("edit_plan")} — ${esc(rname(id))}</h3><form id="pf">
+   <div style="margin-bottom:10px"><label>${t("long_goal")}</label><textarea name="long">${esc(p.long)}</textarea></div>
+   <div style="margin-bottom:10px"><label>${t("short_goal")}</label><textarea name="short">${esc(p.short)}</textarea></div>
+   <div style="margin-bottom:10px"><label>${t("services")}</label><textarea name="svc">${esc(p.svc)}</textarea></div>
+   <div class="row"><div><label>${t("review")}</label><input type="date" name="review" value="${esc(p.review)}"></div></div>
+   <div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn ghost" onclick="closeModal()">${t("cancel")}</button><button class="btn">${t("save")}</button></div></form>`);
+  $("#pf").onsubmit=e=>{e.preventDefault();Object.assign(p,Object.fromEntries(new FormData(e.target)));save();closeModal();render();toast(t("saved"));};};
+
+/* =================== BILLING =================== */
+function bill(rid,ym){
+  const r=db.res.find(x=>x.id===rid);const [y,m]=ym.split("-").map(Number);
+  const from=`${ym}-01`,to=ymd(new Date(y,m,0));
+  const days=new Set(recsRange(from,to).filter(z=>z.rid===rid).map(z=>z.date)).size;
+  const rate=db.copay[rid]??.1;const units=(UNITS[r.level]||700)*days;const total=units*10;const copay=total*rate;
+  return {days,rate,units,total,copay,ins:total-copay};
+}
+V.bill=()=>{
+  const ym=S.billMonth;let sT=0,sC=0;
+  const rows=db.res.map(r=>{const b=bill(r.id,ym);sT+=b.total;sC+=b.copay;
+    return `<tr><td>${esc(rname(r.id))}</td><td>${levelLabel(r.level)}</td><td class="num">${b.days}</td><td class="num">${b.units.toLocaleString()}</td><td class="num">${yen(b.total)}</td>
+    <td><select style="width:80px" onchange="setRate('${r.id}',this.value)">${[.1,.2,.3].map(x=>`<option value="${x}" ${x===b.rate?"selected":""}>${Math.round(x*100)}%</option>`).join("")}</select></td>
+    <td class="num"><b>${yen(b.copay)}</b></td><td><button class="btn sm ghost" onclick="showInv('${r.id}')">${t("view_inv")}</button></td></tr>`;}).join("");
+  return `<h2>${t("nav_bill")}</h2><p class="desc">${t("bill_d")}</p>
+  <div class="toolbar"><div><label>${t("month")}</label><input type="month" id="bMonth" value="${ym}" max="${TODAY.slice(0,7)}"></div></div>
+  <div class="grid g4" style="margin-bottom:14px">
+   <div class="card stat"><div class="n">${yen(sT)}</div><div class="l">${t("total")}</div></div>
+   <div class="card stat"><div class="n">${yen(sT-sC)}</div><div class="l">${t("ins_paid")}</div></div>
+   <div class="card stat"><div class="n">${yen(sC)}</div><div class="l">${t("copay")}</div></div></div>
+  <div class="sheet" style="margin-bottom:14px">${sheetTop(`${t("list_bill")} (${ym})`,t("ck_all",{n:db.res.length}),ym)}<div class="scroll"><table>
+   <tr><th>${t("resident")}</th><th>${t("level")}</th><th class="num">${t("days")}</th><th class="num">${t("units")}</th><th class="num">${t("total")}</th><th>${t("copay_rate")}</th><th class="num">${t("copay")}</th><th></th></tr>${rows}</table></div></div>
+  ${chartCard("cFee",t("c_fee"),t("c_fee_s"))}
+  <p class="note">${t("bill_note")}</p>`;
+};
+V.bill.after=()=>{
+  $("#bMonth").onchange=e=>{if(e.target.value){S.billMonth=e.target.value;render();}};
+  const labels=[],data=[];const now=parse(TODAY);
+  for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const ym=`${d.getFullYear()}-${pad(d.getMonth()+1)}`;labels.push(lang==="ja"?`${d.getFullYear()%100}/${d.getMonth()+1}`:`${T.en.months_short[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`);
+    data.push(db.res.reduce((a,r)=>a+bill(r.id,ym).total,0));}
+  mkChart("cFee",{type:"bar",data:{labels,datasets:[barDS(t("total"),data,PAL[0])]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>yen(c.raw)}}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{callback:v=>"¥"+(v/1e6).toFixed(1)+"M"}}}}});
+};
+window.setRate=(id,v)=>{db.copay[id]=+v;save();render();};
+function invoiceHTML(id,ym){
+  const r=db.res.find(x=>x.id===id);const b=bill(id,ym);
+  return `<div class="inv"><h3>${t("inv_title")} (${ym})</h3><p>${lang==="ja"?`${esc(r.ja)} 様 ${t("inv_to")}`:`${t("inv_to")} ${esc(r.en)}`}</p>
+   <table><tr><th>${t("items")}</th><th class="num">${t("amount")}</th></tr>
+   <tr><td>${t("base_fee")} (${levelLabel(r.level)}, ${b.days}${lang==="ja"?"日":" days"}, ${b.units.toLocaleString()}${lang==="ja"?"単位":" units"})</td><td class="num">${yen(b.total)}</td></tr>
+   <tr><td>${t("ins_paid")}</td><td class="num">−${yen(b.ins)}</td></tr>
+   <tr><td><b>${t("you_pay")}</b> (${Math.round(b.rate*100)}%)</td><td class="num tot">${yen(b.copay)}</td></tr></table><p class="note">CareBridge Demo Facility · ${TODAY}</p></div>`;
+}
+window.showInv=id=>openModal(invoiceHTML(id,S.billMonth)+`<div style="text-align:right;margin-top:12px"><button class="btn" onclick="closeModal()">OK</button></div>`);
+
+/* =================== TOILETING & FLUID CHECK SHEET =================== */
+S.ckDate=TODAY; S.ckHide=false; S.ckLow=800;
+V.check=()=>{
+  const d=S.ckDate, recs=dayRecs(d), x=parse(d);
+  const dl=lang==="ja"?`${x.getFullYear()}年${pad(x.getMonth()+1)}月${pad(x.getDate())}日（${T.ja.days_short[(x.getDay()+6)%7]}）`:`${T.en.days_short[(x.getDay()+6)%7]}, ${d}`;
+  const H=[...Array(24).keys()];
+  const by={};recs.forEach(r=>{if(r.type!=="excretion"&&r.type!=="fluid"&&!(r.type==="meal"&&r.v.water))return;const k=r.rid+"|"+(+r.time.slice(0,2));(by[k]=by[k]||[]).push(r);});
+  let list=db.res; if(S.ckHide) list=list.filter(r=>recs.some(z=>z.rid===r.id));
+  const b8=h=>(h===8||h===16)?"b8":"";
+  const body=list.map((r,i)=>{
+    const g=i%2?"g":"";
+    const cell=(h,row)=>{const l=by[r.id+"|"+h]||[];
+      if(row==="f"){const v=l.reduce((a,c)=>a+fluidMl(c),0);return `<td class="h ${b8(h)}" data-ck="${r.id}" data-h="${h}">${v||""}</td>`;}
+      const ex=l.filter(z=>z.type==="excretion").map(z=>excF(z.v));
+      if(!ex.length) return `<td class="h ${b8(h)}" data-ck="${r.id}" data-h="${h}"></td>`;
+      const val=ex.reduce((a,c)=>a+(row==="s"?c.s:c.u),0);const gd=ex.some(e=>e.g), ic=ex.some(e=>e.i);
+      return `<td class="h ${b8(h)}" data-ck="${r.id}" data-h="${h}">${gd?'<span class="mk">✓</span>':""}${ic?'<span class="mk ic">△</span>':""}${val}</td>`;};
+    const all=recs.filter(z=>z.rid===r.id);
+    const exAll=all.filter(z=>z.type==="excretion").map(z=>excF(z.v));
+    const ts=exAll.reduce((a,c)=>a+c.s,0), tu=exAll.reduce((a,c)=>a+c.u,0), tf=all.reduce((a,c)=>a+fluidMl(c),0);
+    const lowF=r.svc!=="svc_day"&&(d<TODAY||new Date().getHours()>=20)&&all.length&&tf<S.ckLow;
+    return `<tr class="${g}"><td rowspan="3" style="text-align:center">${i+1}</td><td rowspan="3" class="nm"><b>${esc(rname(r.id))}</b><div style="font-size:10px;color:var(--muted)">${esc(r.room)}</div></td>
+        <td class="it">${t("ck_stool")}</td><td class="tot">${all.length?ts:""}</td>${H.map(h=>cell(h,"s")).join("")}</tr>
+      <tr class="${g}"><td class="it">${t("ck_urine")}</td><td class="tot">${all.length?tu:""}</td>${H.map(h=>cell(h,"u")).join("")}</tr>
+      <tr class="${g}"><td class="it">${t("ck_fluid")}</td><td class="tot ${lowF?"low":""}">${all.length?tf:""}</td>${H.map(h=>cell(h,"f")).join("")}</tr>`;}).join("");
+  return `<h2>${t("nav_check")}</h2><p class="desc">${t("ck_d")}</p>
+  <div class="toolbar">
+    <div style="min-width:auto"><label>${t("date")}</label><div style="display:flex;gap:6px;align-items:center">
+      <button class="btn ghost sm" id="kPrev">${t("prev")}</button><input type="date" id="kDate" value="${d}" min="${HIST_START}" max="${TODAY}" style="width:150px">
+      <button class="btn ghost sm" id="kNext" ${d>=TODAY?"disabled":""}>${t("next")}</button><button class="btn ghost sm" id="kToday">${t("today")}</button></div></div>
+    <div style="min-width:auto"><label>&nbsp;</label><label style="display:flex;gap:6px;align-items:center;color:var(--ink);padding:7px 0"><input type="checkbox" id="kHide" style="width:auto" ${S.ckHide?"checked":""}> ${t("ck_hide")}</label></div>
+    <div style="min-width:auto"><label>&nbsp;</label><button class="btn ghost" id="kCsv">${t("copy_csv")}</button></div>
+  </div>
+  <div class="sheet">
+    ${sheetTop(t("ck_title"),t("ck_all",{n:list.length}),dl,"check|"+d)}
+    <div class="wt-wrap" style="max-height:680px;border-radius:4px"><table class="ck">
+      <tr><th colspan="2">${lang==="ja"?"名前":"Name"}</th><th>${t("ck_item")}</th><th>${t("ck_total")}</th>${H.map(h=>`<th class="${b8(h)}">${h}</th>`).join("")}</tr>
+      ${body||`<tr><td colspan="28" class="empty">${t("nodata")}</td></tr>`}
+    </table></div>
+    <div style="text-align:right;margin-top:8px;font-size:13px">${t("ck_leg_g")}　<span style="color:var(--bad)">${t("ck_leg_i")}</span>　<span style="color:var(--bad);font-weight:700">720</span> = ${t("ck_lowfluid",{n:S.ckLow})}</div>
+  </div>`;
+};
+V.check.after=()=>{
+  $("#kPrev").onclick=()=>{if(S.ckDate>HIST_START){S.ckDate=addD(S.ckDate,-1);render();}};
+  $("#kNext").onclick=()=>{if(S.ckDate<TODAY){S.ckDate=addD(S.ckDate,1);render();}};
+  $("#kToday").onclick=()=>{S.ckDate=TODAY;render();};
+  $("#kDate").onchange=e=>{if(e.target.value){S.ckDate=e.target.value>TODAY?TODAY:e.target.value;render();}};
+  $("#kHide").onchange=e=>{S.ckHide=e.target.checked;render();};
+  $("#kCsv").onclick=async()=>{const recs=dayRecs(S.ckDate);const H=[...Array(24).keys()];const out=[["No","Name","Item","Total",...H].join(",")];
+    db.res.forEach((r,i)=>{const rr=recs.filter(z=>z.rid===r.id);
+      const row=(lab,fn)=>{const vals=H.map(h=>fn(rr.filter(z=>+z.time.slice(0,2)===h)));const tot=vals.reduce((a,c)=>a+(+c||0),0);out.push([i+1,`"${rname(r.id)}"`,lab,tot,...vals].join(","));};
+      const ex=l=>l.filter(z=>z.type==="excretion").map(z=>excF(z.v));
+      row(t("ck_stool"),l=>{const e=ex(l);return e.length?e.reduce((a,c)=>a+c.s,0):"";});
+      row(t("ck_urine"),l=>{const e=ex(l);return e.length?e.reduce((a,c)=>a+c.u,0):"";});
+      row(t("ck_fluid"),l=>l.reduce((a,c)=>a+fluidMl(c),0)||"");});
+    try{await navigator.clipboard.writeText(out.join("\n"));toast(t("copied"));}catch(e){toast(t("copy_fail"));}};
+  document.querySelectorAll("[data-ck]").forEach(c=>c.onclick=()=>ckEntry(c.dataset.ck,+c.dataset.h));
+};
+function ckEntry(rid,h){
+  const d=S.ckDate;const l=dayRecs(d).filter(r=>r.rid===rid&&+r.time.slice(0,2)===h&&(r.type==="excretion"||r.type==="fluid"||(r.type==="meal"&&r.v.water))).sort((a,b)=>a.time.localeCompare(b.time));
+  const onDuty=dayAtt(d).map(a=>a.sid);const defBy=onDuty[0]||db.staff[0]?.id;
+  const nowH=new Date().getHours();const tm=`${pad(h)}:${d===TODAY&&h===nowH?pad(new Date().getMinutes()):"00"}`;
+  openModal(`<h3>${esc(rname(rid))} — ${t("ck_entry",{h:`${d} ${pad(h)}:00`})}</h3>
+   ${l.length?`<div class="note" style="margin:0 0 4px">${t("ck_existing")}</div><table style="margin-bottom:12px">${l.map(r=>`<tr><td>${r.time}</td><td>${typeTag(r.type)}</td><td>${r.type==="meal"?`${r.v.water} ml`:recSummary(r)}</td><td>${esc(staffName(r.by))}</td><td>${r.type!=="meal"?`<button class="btn sm danger" onclick="ckDel('${r.id}','${rid}',${h})" aria-label="${t("del")}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>`:""}</td></tr>`).join("")}</table>`:""}
+   <form id="ckf">
+    <div class="row"><div><label>${t("time")}</label><input type="time" name="time" value="${tm}"></div><div><label>${t("by")}</label><select name="by">${staffOpts(defBy)}</select></div></div>
+    <div class="row"><div><label>${t("ck_urine")}</label><select name="u"><option value="">—</option><option value="1">1</option><option value="0">0</option></select></div>
+      <div><label>${t("ck_stool")}</label><select name="s"><option value="">—</option><option value="0">0</option><option value="1">1</option></select></div>
+      <div><label>${t("ck_ml")}</label><input type="number" name="ml" step="10" placeholder="150"></div></div>
+    <div style="display:flex;gap:16px;margin-bottom:12px">
+      <label style="display:flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" name="g" style="width:auto"> ✓ ${t("guided")}</label>
+      <label style="display:flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" name="i" style="width:auto"> △ ${t("incont")}</label></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn ghost" onclick="closeModal()">${t("cancel")}</button><button class="btn">${t("save")}</button></div>
+   </form>`);
+  $("#ckf").onsubmit=e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));
+    const hasEx=f.u!==""||f.s!==""||!!f.g||!!f.i, hasF=!!f.ml;
+    if(!hasEx&&!hasF){toast(t("required"));return;}
+    const time=f.time||tm;
+    if(hasEx) db.userRec.push({id:"u-"+uid(),rid,date:d,time,type:"excretion",v:{u:+(f.u||0),s:+(f.s||0),g:!!f.g,i:!!f.i},memo:"",share:false,by:f.by});
+    if(hasF) db.userRec.push({id:"u-"+uid(),rid,date:d,time,type:"fluid",v:{ml:+f.ml},memo:"",share:false,by:f.by});
+    buildUserIdx();save();closeModal();render();toast(t("saved"));};
+}
+window.ckDel=(id,rid,h)=>{if(id.startsWith("u-")){db.userRec=db.userRec.filter(r=>r.id!==id);buildUserIdx();}else db.deleted[id]=1;save();render();ckEntry(rid,h);};
+
+/* =================== 24-HOUR SHEET =================== */
+S.hDate=TODAY; S.hMode="all"; S.hHide=false;
+function staffAtHour(d,h){
+  const a=h*60,b=a+60; const ids=new Set();
+  dayAtt(d).forEach(x=>{const i=toMin(x.in);let o=x.out?toMin(x.out):(d===TODAY?nowMin():1440);if(o<i)o+=1440;if(i<b&&o>a)ids.add(x.sid);});
+  if(d>HIST_START) dayAtt(addD(d,-1)).forEach(x=>{if(!x.out)return;const i=toMin(x.in),o=toMin(x.out);if(o<i&&a<o)ids.add(x.sid);});
+  return ids.size;
+}
+const HR_ITEMS=["temp","meal","fluid","exc","oth"];
+const hrLabel=k=>k==="oth"?t("h_other"):t("m_"+k);
+/* one hour's records -> cell for one item row: "" or {v,red} */
+function hourItem(k,l){
+  if(!l.length) return "";
+  if(k==="temp"){const v=l.filter(r=>r.type==="vital");return v.length?{v:v.map(r=>r.v.temp).join("/"),red:v.some(isAlert)}:"";}
+  if(k==="meal"){const v=l.filter(r=>r.type==="meal");return v.length?{v:v.map(r=>r.v.amt).join("/"),red:v.some(isAlert)}:"";}
+  if(k==="fluid"){const v=l.reduce((a,c)=>a+fluidMl(c),0);return v?{v}:"";}
+  if(k==="exc"){const e=l.filter(r=>r.type==="excretion").map(r=>excF(r.v));if(!e.length)return "";
+    const u=e.some(x=>x.u),s=e.some(x=>x.s),g=e.some(x=>x.g),i=e.some(x=>x.i);
+    return {v:(g?"✓":"")+(i?"△":"")+(u&&s?t("ab_both"):u?t("ab_urine"):s?t("ab_stool"):"0"),red:i};}
+  const o=l.filter(r=>r.type==="bath"||r.type==="med"||r.type==="note");
+  return o.length?{v:o.map(r=>t("ab_"+r.type)).join(""),red:o.some(isAlert)}:"";
+}
+/* whole day -> total column for one item row */
+function hourTot(k,rr,r,d){
+  if(!rr.length) return "";
+  if(k==="temp"){const v=rr.filter(z=>z.type==="vital").map(z=>+z.v.temp);return v.length?{v:Math.max(...v).toFixed(1),red:v.some(x=>x>=37.5)}:"";}
+  if(k==="meal"){const v=rr.filter(z=>z.type==="meal").map(z=>+z.v.amt);return v.length?{v:Math.round(v.reduce((a,c)=>a+c,0)/v.length)}:"";}
+  if(k==="fluid"){const tf=rr.reduce((a,c)=>a+fluidMl(c),0);const low=r.svc!=="svc_day"&&tf<S.ckLow&&(d<TODAY||new Date().getHours()>=20);return {v:tf,red:low};}
+  if(k==="exc"){const e=rr.filter(z=>z.type==="excretion").map(z=>excF(z.v));return e.length?{v:`${t("ab_urine")}${e.reduce((a,c)=>a+c.u,0)} ${t("ab_stool")}${e.reduce((a,c)=>a+c.s,0)}`}:"";}
+  const n=rr.filter(z=>z.type==="bath"||z.type==="med"||z.type==="note").length;return n?{v:n}:"";
+}
+function hourModel(d){
+  const recs=dayRecs(d),by={};recs.forEach(r=>{const k=r.rid+"|"+(+r.time.slice(0,2));(by[k]=by[k]||[]).push(r);});
+  const items=S.hMode==="all"?HR_ITEMS:[S.hMode];
+  let list=db.res; if(S.hHide) list=list.filter(r=>recs.some(z=>z.rid===r.id));
+  const curH=d===TODAY?new Date().getHours():-1;
+  return {recs,by,items,list,curH,
+    tot:H24.map(h=>recs.filter(r=>+r.time.slice(0,2)===h).length),
+    stf:H24.map(h=>(d===TODAY&&h>curH)?"":staffAtHour(d,h))};
+}
+V.hour=()=>{
+  const d=S.hDate, x=parse(d), M=hourModel(d), {recs,by,items,list,curH}=M;
+  const dl=lang==="ja"?`${x.getFullYear()}年${pad(x.getMonth()+1)}月${pad(x.getDate())}日（${T.ja.days_short[(x.getDay()+6)%7]}）`:`${T.en.days_short[(x.getDay()+6)%7]}, ${d}`;
+  const b8=h=>(h===8||h===16)?"b8":"";
+  const cv=c=>c===""?"":esc(String(c.v));
+  const body=list.map((r,i)=>{
+    const g=i%2?"g":"", rr=recs.filter(z=>z.rid===r.id);
+    return items.map((k,j)=>`<tr class="${g}">${j===0?`<td rowspan="${items.length}" style="text-align:center">${i+1}</td><td rowspan="${items.length}" class="nm"><b>${esc(rname(r.id))}</b><div style="font-size:10px;color:var(--muted)">${esc(r.room)}</div></td>`:""}
+      <td class="it">${hrLabel(k)}</td>${(()=>{const c=hourTot(k,rr,r,d);return `<td class="tot ${c&&c.red?"low":""}">${cv(c)}</td>`;})()}
+      ${H24.map(h=>{const c=hourItem(k,by[r.id+"|"+h]||[]);return `<td class="h ${b8(h)} ${h===curH?"now":""} ${c&&c.red?"low":""}" data-hr="${r.id}" data-hh="${h}">${cv(c)}</td>`;}).join("")}</tr>`).join("");
+  }).join("");
+  const modes=[["all",t("hr_all_items")],...HR_ITEMS.map(k=>[k,hrLabel(k)])];
+  return `<h2>${t("nav_hour")}</h2><p class="desc">${t("hour_d")}</p>
+  <div class="toolbar">
+    <div style="min-width:auto"><label>${t("date")}</label><div style="display:flex;gap:6px;align-items:center">
+      <button class="btn ghost sm" id="hPrev" aria-label="${t("prev_day")}">${t("prev")}</button><input type="date" id="hDate" value="${d}" min="${HIST_START}" max="${TODAY}" style="width:150px">
+      <button class="btn ghost sm" id="hNext" aria-label="${t("next_day")}" ${d>=TODAY?"disabled":""}>${t("next")}</button><button class="btn ghost sm" id="hToday">${t("today")}</button></div></div>
+    <div><label>${t("show")}</label><select id="hMode">${modes.map(([k,l])=>`<option value="${k}" ${k===S.hMode?"selected":""}>${l}</option>`).join("")}</select></div>
+    <div style="min-width:auto"><label>&nbsp;</label><label style="display:flex;gap:6px;align-items:center;color:var(--ink);padding:7px 0"><input type="checkbox" id="hHide" style="width:auto" ${S.hHide?"checked":""}> ${t("ck_hide")}</label></div>
+  </div>
+  <div class="sheet">
+    ${sheetTop(t("hr_title"),t("ck_all",{n:list.length}),dl,"hour|"+d)}
+    <div class="wt-wrap" style="max-height:680px"><table class="ck">
+      <tr><th colspan="2">${lang==="ja"?"名前":"Name"}</th><th>${t("ck_item")}</th><th>${t("hr_day")}</th>${H24.map(h=>`<th class="${b8(h)} ${h===curH?"now":""}">${h}</th>`).join("")}</tr>
+      ${body||`<tr><td colspan="28" class="empty">${t("nodata")}</td></tr>`}
+      <tr class="ft"><td colspan="3">${t("h_total")}</td><td class="tot">${recs.length}</td>${M.tot.map((v,h)=>`<td class="${b8(h)}">${v||""}</td>`).join("")}</tr>
+      <tr class="ft"><td colspan="3"><i class="fa-solid fa-user-nurse" aria-hidden="true"></i> ${t("h_staff")}</td><td class="tot"></td>${M.stf.map((v,h)=>`<td class="${b8(h)}">${v}</td>`).join("")}</tr>
+    </table></div>
+    <div style="text-align:right;margin-top:8px;font-size:13px;line-height:1.9">${t("hr_leg")}　${t("ck_leg_g")}　<span style="color:var(--shu)">${t("ck_leg_i")}</span>　<span style="color:var(--shu);font-weight:700">${t("hr_red")}</span></div>
+  </div>
+  <div style="margin-top:14px">${chartCard("cHour",t("h_chart"),t("h_chart_s"))}</div>`;
+};
+V.hour.after=()=>{
+  $("#hPrev").onclick=()=>{if(S.hDate>HIST_START){S.hDate=addD(S.hDate,-1);render();}};
+  $("#hNext").onclick=()=>{if(S.hDate<TODAY){S.hDate=addD(S.hDate,1);render();}};
+  $("#hToday").onclick=()=>{S.hDate=TODAY;render();};
+  $("#hDate").onchange=e=>{if(e.target.value){S.hDate=e.target.value>TODAY?TODAY:e.target.value;render();}};
+  $("#hMode").onchange=e=>{S.hMode=e.target.value;render();};
+  $("#hHide").onchange=e=>{S.hHide=e.target.checked;render();};
+  document.querySelectorAll("[data-hr]").forEach(c=>c.onclick=()=>{
+    const rid=c.dataset.hr,h=+c.dataset.hh;const l=dayRecs(S.hDate).filter(r=>r.rid===rid&&+r.time.slice(0,2)===h).sort((a,b)=>a.time.localeCompare(b.time));
+    openModal(`<h3>${esc(rname(rid))} — ${S.hDate} ${pad(h)}:00–${pad(h)}:59</h3>
+      ${l.length?`<table><tr><th>${t("time")}</th><th>${t("type")}</th><th>${t("detail")}</th><th>${t("by")}</th></tr>${l.map(r=>`<tr><td>${r.time}</td><td>${typeTag(r.type)}</td><td>${recSummary(r)}${isAlert(r)?' <span class="tag bad">!</span>':""}${r.memo?`<div style="color:var(--muted)">${esc(r.memo)}</div>`:""}</td><td>${esc(staffName(r.by))}</td></tr>`).join("")}</table>`:`<div class="empty">${t("nodata")}</div>`}
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">${S.hDate===TODAY?`<button class="btn ghost" onclick="addAtHour('${rid}',${h})">${t("add_at",{h:pad(h)+":00"})}</button>`:""}<button class="btn" onclick="closeModal()">OK</button></div>`);
+  });
+  const recs=dayRecs(S.hDate);const N=24;const byType={};TYPES.forEach(ty=>byType[ty]=Array(N).fill(0));
+  recs.forEach(r=>byType[r.type][+r.time.slice(0,2)]++);
+  mkChart("cHour",{type:"bar",data:{labels:[...Array(24).keys()].map(h=>pad(h)),datasets:TYPES.map(ty=>barDS(t(ty),byType[ty],typeColor(ty),{borderRadius:0,borderColor:"#fff",borderWidth:{top:1}}))},
+    options:{interaction:{mode:"index",intersect:false},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true}}}});
+};
+window.addAtHour=(rid,h)=>{closeModal();S.newRes=rid;S.newTime=`${pad(h)}:${h===new Date().getHours()?pad(new Date().getMinutes()):"00"}`;view="rec";render();window.scrollTo(0,0);};
+
+/* =================== WEIGHT RECORDS =================== */
+const ymAdd=(ym,n)=>{const [y,m]=ym.split("-").map(Number);const d=new Date(y,m-1+n,1);return `${d.getFullYear()}-${pad(d.getMonth()+1)}`;};
+const CUR_YM=TODAY.slice(0,7);
+const genWt={};
+(function(){const R=rng(888);BASE_RES.forEach((r,i)=>{const base=(17.5+R()*8.5)*(r.ht/100)**2, drift=(R()-.6)*.12;let w=base;
+  for(let k=23;k>=0;k--){const ym=ymAdd(CUR_YM,-k);w+=drift+(R()-.5)*.9; if(R()<.03) continue; genWt[`${r.id}|${ym}`]=+w.toFixed(1);} });
+  const k=`r11|${CUR_YM}`;if(genWt[k])genWt[k]=+(genWt[k]-2.6).toFixed(1); /* sample weight-loss alert */ })();
+function getWt(rid,ym){const k=`${rid}|${ym}`;if(k in db.wt)return db.wt[k]===""?null:db.wt[k];return genWt[k]??null;}
+const reiwa=y=>y-2018;
+function monthHead(ym){const [y,m]=ym.split("-").map(Number);return lang==="ja"?`${m}月`:T.en.months_short[m-1];}
+function yearHead(ym){const y=+ym.slice(0,4);return lang==="ja"?`令和${reiwa(y)}年`:`${y}`;}
+S.wtN=12; S.wtEnd=CUR_YM; S.wtRes="r1";
+function wtMonths(){const a=[];for(let k=S.wtN-1;k>=0;k--)a.push(ymAdd(S.wtEnd,-k));return a;}
+V.wt=()=>{
+  const ms=wtMonths();
+  // year header spans
+  const years=[];ms.forEach(m=>{const y=m.slice(0,4);if(years.length&&years[years.length-1].y===y)years[years.length-1].n++;else years.push({y,n:1,ym:m});});
+  let flags=0;
+  const rows=db.res.map((r,i)=>{
+    let last=null,prev=null;
+    const cells=ms.map((m,j)=>{const w=getWt(r.id,m);const p=getWt(r.id,ymAdd(m,-1));let cls="";
+      if(w!=null&&p!=null){if(w-p<=-2)cls="loss";else if(w-p>=2)cls="gain";}
+      if(m===CUR_YM&&cls)flags++;
+      if(w!=null){prev=last;last=w;}
+      return `<td class="kg ${cls}"><input data-r="${r.id}" data-m="${m}" value="${w??""}" inputmode="decimal" aria-label="${esc(rname(r.id))} ${m}"></td>`;}).join("");
+    const lastW=[...ms].reverse().map(m=>getWt(r.id,m)).find(v=>v!=null);
+    const firstW=ms.map(m=>getWt(r.id,m)).find(v=>v!=null);
+    const bmi=lastW&&r.ht?lastW/((r.ht/100)**2):null;
+    const ch=lastW!=null&&firstW!=null?lastW-firstW:null;
+    return `<tr><td class="c stk s0">${i+1}</td><td class="c stk s1"><b>${esc(rname(r.id))}</b></td><td class="c" style="text-align:right">${r.ht||"—"}</td>
+      <td class="c" style="text-align:right">${bmi?bmi.toFixed(1):"—"}</td>${cells}
+      <td class="c" style="text-align:right;color:${ch==null?"":ch<=-2?"var(--bad)":ch>=2?"var(--warn)":"inherit"}">${ch==null?"—":(ch>0?"+":"")+ch.toFixed(1)}</td></tr>`;}).join("");
+  const avgs=ms.map(m=>{const v=db.res.map(r=>getWt(r.id,m)).filter(x=>x!=null);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):"—";});
+  const endOpts=[];for(let k=0;k<24;k++){const m=ymAdd(CUR_YM,-k);endOpts.push(`<option value="${m}" ${m===S.wtEnd?"selected":""}>${m}</option>`);}
+  return `<h2>${t("nav_wt")}</h2><p class="desc">${t("wt_d")}</p>
+  <div class="toolbar">
+    <div style="min-width:auto"><label>${t("wt_months")}</label><div class="seg">${[6,12,24].map(n=>`<button data-wn="${n}" class="${S.wtN===n?"on":""}">${t("n_mo",{n})}</button>`).join("")}</div></div>
+    <div><label>${t("wt_end")}</label><select id="wtEnd">${endOpts.join("")}</select></div>
+    <div style="min-width:auto"><label>&nbsp;</label><button class="btn ghost" id="wtCsv">${t("copy_csv")}</button></div>
+    <div class="range" style="min-width:auto">${yearHead(ms[0])} ${monthHead(ms[0])} – ${yearHead(ms[ms.length-1])} ${monthHead(ms[ms.length-1])}</div>
+  </div>
+  <div class="grid g4" style="margin-bottom:14px">
+    <div class="card stat"><div class="n">${db.res.length}</div><div class="l">${t("k_res")}</div></div>
+    <div class="card stat"><div class="n">${avgs[avgs.length-1]}${avgs[avgs.length-1]!=="—"?" kg":""}</div><div class="l">${t("facility_avg")} (${monthHead(ms[ms.length-1])})</div></div>
+    <div class="card stat"><div class="n" style="${flags?"color:var(--bad)":""}">${flags}</div><div class="l">${t("wt_flag")}</div></div>
+  </div>
+  <div class="sheet">${sheetTop(t("wt_title"),t("ck_all",{n:db.res.length}),`${yearHead(ms[0])} ${monthHead(ms[0])} – ${yearHead(ms[ms.length-1])} ${monthHead(ms[ms.length-1])}`,"wt|"+S.wtEnd)}<div class="wt-wrap"><table class="wt">
+    <tr><th class="stk s0" rowspan="2">No</th><th class="stk s1" rowspan="2">${lang==="ja"?"氏名":"Name"}</th><th rowspan="2">${lang==="ja"?"身長":"Height"}</th><th rowspan="2">${t("bmi")}</th>
+      ${years.map(y=>`<th colspan="${y.n}" style="top:0">${yearHead(y.ym)}</th>`).join("")}<th rowspan="2">${t("change")}</th></tr>
+    <tr>${ms.map(m=>`<th style="top:33px">${monthHead(m)}</th>`).join("")}</tr>
+    ${rows}
+    <tr class="avg"><td class="c stk s0"></td><td class="c stk s1">${t("avg_row")}</td><td class="c"></td><td class="c"></td>${avgs.map(a=>`<td class="c" style="text-align:right">${a}</td>`).join("")}<td class="c"></td></tr>
+  </table></div></div>
+  <p class="note"><span class="legend-sw" style="background:var(--bad-bg);margin-left:0"></span>${t("wt_loss")}<span class="legend-sw" style="background:var(--warn-bg)"></span>${t("wt_gain")}<br>${t("wt_note")}</p>
+  <div class="card" style="margin-top:14px"><div class="card-h"><div><h3>${t("wt_chart")}</h3><div class="s">${t("wt_chart_s")}</div></div>
+    <div style="display:flex;gap:8px;align-items:center"><select id="wtRes" style="width:200px">${resOpts(S.wtRes)}</select><button class="btn link" data-tbl="cWt">${t("show_table")}</button></div></div>
+    <div class="chartbox" id="box-cWt"><canvas id="cWt"></canvas></div><div id="tbl-cWt" class="scroll" style="display:none"></div></div>`;
+};
+V.wt.after=()=>{
+  document.querySelectorAll("[data-wn]").forEach(b=>b.onclick=()=>{S.wtN=+b.dataset.wn;render();});
+  $("#wtEnd").onchange=e=>{S.wtEnd=e.target.value;render();};
+  $("#wtRes").onchange=e=>{S.wtRes=e.target.value;render();};
+  document.querySelectorAll(".wt input").forEach(inp=>{
+    inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();inp.blur();}};
+    inp.onchange=()=>{const v=inp.value.trim();const k=`${inp.dataset.r}|${inp.dataset.m}`;
+      if(v===""){db.wt[k]="";}else{const n=parseFloat(v);if(isNaN(n)||n<15||n>200){toast(t("required"));inp.value=getWt(inp.dataset.r,inp.dataset.m)??"";return;}db.wt[k]=+n.toFixed(1);}
+      save();render();toast(t("saved"));};
+  });
+  $("#wtCsv").onclick=async()=>{const ms=wtMonths();
+    const lines=[["No","Name","Height","BMI",...ms].join(",")].concat(db.res.map((r,i)=>{const lastW=[...ms].reverse().map(m=>getWt(r.id,m)).find(v=>v!=null);const bmi=lastW&&r.ht?(lastW/((r.ht/100)**2)).toFixed(1):"";
+      return [i+1,`"${rname(r.id)}"`,r.ht||"",bmi,...ms.map(m=>getWt(r.id,m)??"")].join(",");}));
+    try{await navigator.clipboard.writeText(lines.join("\n"));toast(t("copied"));}catch(e){toast(t("copy_fail"));}};
+  if(!db.res.find(r=>r.id===S.wtRes))S.wtRes=db.res[0]?.id;
+  const ms=wtMonths();
+  const one=ms.map(m=>getWt(S.wtRes,m));
+  const avg=ms.map(m=>{const v=db.res.map(r=>getWt(r.id,m)).filter(x=>x!=null);return v.length?+(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):null;});
+  const o=lineOpts();o.plugins.legend={display:true};
+  mkChart("cWt",{type:"line",data:{labels:ms.map(m=>(lang==="ja"?`${reiwa(+m.slice(0,4))}年`:m.slice(2,4)+" ")+monthHead(m)),datasets:[lineDS(rname(S.wtRes),one,PAL[0]),lineDS(t("facility_avg"),avg,"#9c9c9c")]},options:o});
+};
+
+/* =================== IoT =================== */
+let sensors=null;
+function initSensors(){sensors=db.res.filter(r=>r.svc!=="svc_day").map(r=>({rid:r.id,st:"asleep",hr:62+Math.floor(Math.random()*10),rr:14,at:new Date()}));}
+setInterval(()=>{if(!sensors)initSensors();const st=["asleep","asleep","in_bed","move","out_bed","alert_s"];
+  sensors.forEach(s=>{if(Math.random()<.35){s.st=st[Math.floor(Math.random()*st.length)];s.hr=58+Math.floor(Math.random()*30);s.rr=12+Math.floor(Math.random()*8);s.at=new Date();}});
+  if(view==="iot")render();},4000);
+const sCol=st=>({asleep:PAL[0],in_bed:PAL[2],move:PAL[3],out_bed:"#9ca3af",alert_s:"#b42318"})[st];
+V.iot=()=>{if(!sensors)initSensors();
+  return `<h2>${t("nav_iot")}</h2><p class="desc">${t("iot_d")}</p><div class="grid g4">${sensors.filter(s=>db.res.some(r=>r.id===s.rid)).map(s=>{const r=db.res.find(x=>x.id===s.rid);
+   return `<div class="card"><div style="display:flex;gap:10px;align-items:center"><span class="dot" style="background:${sCol(s.st)}"></span><div><b>${esc(r.room)} · ${esc(rname(s.rid))}</b><div><span class="tag ${s.st==="alert_s"?"bad":s.st==="out_bed"?"gray":s.st==="move"?"warn":"ok"}">${t(s.st)}</span></div></div></div>
+   <div style="margin-top:10px"><i class="fa-solid fa-heart-pulse" style="color:var(--shu)" aria-hidden="true"></i> ${s.hr} bpm&emsp;<i class="fa-solid fa-lungs" style="color:var(--ai)" aria-hidden="true"></i> ${s.rr} /min</div><div class="note">${t("last")}: ${s.at.toLocaleTimeString(lang==="ja"?"ja-JP":"en-US")}</div></div>`}).join("")}</div>`;};
+
+/* =================== MESSAGES =================== */
+V.msg=()=>`<h2>${t("nav_msg")}</h2><p class="desc">${t("msg_d")}</p>
+  <div class="card" style="margin-bottom:14px"><form id="mf"><div class="row"><div><label>${t("by")}</label><select name="by">${staffOpts("s1")}</select></div></div>
+   <textarea name="text" placeholder="${t("msg_ph")}"></textarea>
+   <div style="display:flex;gap:10px;align-items:center;margin-top:8px"><label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--ink)"><input type="checkbox" name="urgent" style="width:auto"> ${t("urgent")}</label>
+    <span style="flex:1"></span><button class="btn">${t("post")}</button></div></form></div>
+  ${[...db.msgs].reverse().map(m=>`<div class="msg ${m.urgent?"urgent":""}"><div class="meta">${m.urgent?`<span class="tag bad">${t("urgent")}</span> `:""}${esc(staffName(m.by))} · ${esc(m.at)}</div>${esc(m.text)}</div>`).join("")||`<div class="empty">${t("no_msg")}</div>`}`;
+V.msg.after=()=>{$("#mf").onsubmit=e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));if(!f.text.trim())return;db.msgs.push({id:uid(),by:f.by,at:`${TODAY} ${fromMin(nowMin())}`,text:f.text,urgent:!!f.urgent});save();render();};};
+
+/* =================== FAMILY =================== */
+V.fam=()=>{
+  if(!db.res.find(r=>r.id===S.famRes))S.famRes=db.res[0]?.id;if(!S.famRes)return `<div class="empty">${t("nodata")}</div>`;
+  const sh=recsRange(addD(TODAY,-14),TODAY).filter(r=>r.rid===S.famRes&&r.share).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).slice(0,30);
+  return `<h2>${t("nav_fam")}</h2><p class="desc">${t("fam_d")}</p>
+  <div class="toolbar"><div><label>${t("fam_view")}</label><select id="famSel">${resOpts(S.famRes)}</select></div></div>
+  <div class="grid g2"><div class="card"><h3><i class="fa-solid fa-camera" aria-hidden="true"></i> ${t("shared_rec")}</h3><div class="tl">${sh.map(r=>`<div class="msg"><div class="meta">${r.date} ${r.time} · ${t(r.type)}</div>${recSummary(r)}${r.memo?`<div>${esc(r.memo)}</div>`:""}</div>`).join("")||`<div class="empty">${t("nodata")}</div>`}</div></div>
+   <div><div class="card" style="margin-bottom:14px"><h3><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> ${t("notices")}</h3><div class="msg">${t("notice1")}</div><div class="msg">${t("notice2")}</div></div>
+   <div class="card"><h3><i class="fa-solid fa-file-invoice" aria-hidden="true"></i> ${t("latest_inv")}</h3>${invoiceHTML(S.famRes,TODAY.slice(0,7))}</div></div></div>`;
+};
+V.fam.after=()=>{const s=$("#famSel");if(s)s.onchange=e=>{S.famRes=e.target.value;render();};};
+
+V.set=()=>`<h2>${t("nav_set")}</h2><p class="desc">${t("set_d")}</p><div class="card"><button class="btn danger" onclick="resetData()">${t("reset")}</button></div>`;
+window.resetData=()=>{db=blank();buildUserIdx();sensors=null;save();render();toast(t("reset_ok"));};
+
+/* =================== EXCEL EXPORT =================== */
+const fmtDay=d=>{const x=parse(d);return lang==="ja"?`${x.getFullYear()}年${pad(x.getMonth()+1)}月${pad(x.getDate())}日（${T.ja.days_short[(x.getDay()+6)%7]}）`:`${T.en.days_short[(x.getDay()+6)%7]}, ${d}`;};
+const plain=h=>{const e=document.createElement("div");e.innerHTML=String(h??"");return e.textContent;};
+const sheetTop=(title,left,right,stampKey)=>`<div class="ck-head"><span>${left||""}</span><h3>${title}</h3><span class="rt"><span>${right||""}</span>${stampKey?stampBoxes(stampKey):""}</span></div>`;
+let freshStamp=null;
+const surname=(st)=>lang==="ja"?st.ja.split(/\s+/)[0]:st.en.split(/\s+/).slice(-1)[0];
+function stampBoxes(key){
+  db.stamps=db.stamps||{};
+  return `<span class="stamps" role="group" aria-label="承認欄">${["rec","nurse","mgr"].map(r=>{const k=key+"|"+r,v=db.stamps[k],st=v&&db.staff.find(x=>x.id===v.sid);
+    return `<button type="button" class="sb" data-stamp="${k}" title="${st?esc(t("stamp_by",{n:staffName(st.id),d:v.at})):t("stamp_hint")}"><span class="sl">${t("sr_"+r)}</span><span class="sv">${st?`<span class="hanko ${lang==="ja"?"":"lat"} ${freshStamp===k?"new":""}">${esc(surname(st))}<i>${v.at.slice(5).replace("-","/")}</i></span>`:""}</span></button>`;}).join("")}</span>`;
+}
+function bindStamps(){
+  document.querySelectorAll("[data-stamp]").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.stamp, role=k.split("|").pop(), v=db.stamps[k];
+    if(v){ openModal(`<h3>${t("sr_"+role)}</h3><p>${esc(t("stamp_by",{n:staffName(v.sid),d:v.at}))}</p><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn ghost" onclick="closeModal()">${t("cancel")}</button><button class="btn danger" id="unst">${t("stamp_remove")}</button></div>`);
+      $("#unst").onclick=()=>{delete db.stamps[k];save();closeModal();render();toast(t("unstamped"));}; return; }
+    const pref=role==="nurse"?"ro_nurse":role==="mgr"?"ro_mgr":null;
+    const list=[...db.staff].sort((a,b)=>(b.role===pref)-(a.role===pref));
+    openModal(`<h3>${t("stamp_pick",{r:t("sr_"+role)})}</h3><p class="note" style="margin-top:0">${t("stamp_who")}</p><div class="pick">${list.map(s=>`<button class="btn ghost" data-sid="${s.id}"><i class="fa-solid fa-stamp" aria-hidden="true"></i> ${esc(staffName(s.id))}</button>`).join("")}</div><div style="text-align:right"><button class="btn ghost" onclick="closeModal()">${t("cancel")}</button></div>`);
+    document.querySelectorAll("[data-sid]").forEach(x=>x.onclick=()=>{db.stamps[k]={sid:x.dataset.sid,at:TODAY};freshStamp=k;save();closeModal();render();freshStamp=null;toast(t("stamped"));});
+  });
+}
+const fnameSafe=s=>s.replace(/[\\/:*?"<>|]/g,"-");
+let excelLib=null;
+function loadExcel(){
+  if(window.ExcelJS) return Promise.resolve(window.ExcelJS);
+  if(excelLib) return excelLib;
+  const urls=["https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js","https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"];
+  excelLib=new Promise((res,rej)=>{let i=0;const next=()=>{if(i>=urls.length){excelLib=null;rej(new Error("lib"));return;}
+    const s=document.createElement("script");s.src=urls[i++];s.onload=()=>window.ExcelJS?res(window.ExcelJS):next();s.onerror=next;document.head.appendChild(s);};next();});
+  return excelLib;
+}
+setTimeout(()=>loadExcel().catch(()=>{}),2500); // warm up so the first export is quick
+let dlNs=null;
+function getDownloads(){ if(!dlNs) dlNs=(window.claude&&window.claude.use)?window.claude.use("downloads").catch(()=>null):Promise.resolve(null); return dlNs; }
+
+async function buildXlsx(sheets){
+  const X=await loadExcel();
+  const wb=new X.Workbook(); wb.creator="CareBridge Demo"; wb.created=new Date();
+  const font={name:lang==="ja"?"Meiryo UI":"Calibri",size:10};
+  const thin={style:"thin",color:{argb:"FF9AA19E"}}, thick={style:"medium",color:{argb:"FF333333"}};
+  const used=new Set();
+  for(const sp of sheets){
+    let nm=fnameSafe(sp.name).replace(/[\[\]]/g,"").slice(0,31)||"Sheet"; let k=2; while(used.has(nm)) nm=nm.slice(0,28)+"-"+(k++); used.add(nm);
+    const ws=wb.addWorksheet(nm,{pageSetup:{orientation:"landscape",paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:.3,right:.3,top:.4,bottom:.4,header:.2,footer:.2}}});
+    const nC=sp.cols.length; ws.columns=sp.cols.map(w=>({width:w}));
+    ws.mergeCells(1,1,1,nC); const tc=ws.getCell(1,1); tc.value=sp.title; tc.font={...font,size:15,bold:true}; tc.alignment={horizontal:"center",vertical:"middle"}; ws.getRow(1).height=24;
+    const half=Math.max(1,Math.floor(nC/2));
+    if(nC>1){ ws.mergeCells(2,1,2,half); ws.mergeCells(2,half+1,2,nC); }
+    const lc=ws.getCell(2,1); lc.value=sp.left||""; lc.font=font;
+    if(nC>1){ const rc=ws.getCell(2,half+1); rc.value=sp.right||""; rc.font=font; rc.alignment={horizontal:"right"}; }
+    const top=4, hN=sp.head.length, rows=[...sp.head,...sp.body];
+    rows.forEach((row,ri)=>{
+      const isHead=ri<hN, bi=ri-hN;
+      const band=!isHead&&sp.band>0&&Math.floor(bi/sp.band)%2===1;
+      for(let ci=0;ci<nC;ci++){
+        const cell=ws.getCell(top+ri,ci+1), raw=row[ci];
+        if(raw!==null&&raw!==undefined){
+          const o=(typeof raw==="object")?raw:{v:raw};
+          cell.value=(o.v===undefined||o.v===null)?"":o.v;
+          const f={...font}; if(isHead||o.bold) f.bold=true; if(o.red) f.color={argb:"FFB42318"}; if(o.warn) f.color={argb:"FFB54708"}; cell.font=f;
+          const num=typeof cell.value==="number";
+          cell.alignment={vertical:"middle",wrapText:!!o.wrap,horizontal:(isHead||(ci===0&&sp.head[0][0]==="No"))?"center":(sp.center&&ci>=sp.freezeX)?"center":num?"right":"left"};
+          if(o.fmt) cell.numFmt=o.fmt;
+          if(o.fill) cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:o.fill}};
+        }
+        if(isHead) cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFE9ECEA"}};
+        else if(band&&!(raw&&raw.fill)) cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFEDEDED"}};
+        cell.border={top:thin,bottom:thin,right:thin,left:(sp.thick||[]).includes(ci)?thick:thin};
+      }
+    });
+    (sp.merges||[]).forEach(([r1,c1,r2,c2])=>{try{ws.mergeCells(top+r1,c1+1,top+r2,c2+1);}catch(e){}});
+    if(sp.note){ const nr=top+rows.length+1; ws.mergeCells(nr,1,nr,nC); const c=ws.getCell(nr,1); c.value=sp.note; c.font={...font,color:{argb:"FF555555"}}; c.alignment={horizontal:"right"}; }
+    ws.views=[{state:"frozen",xSplit:sp.freezeX||0,ySplit:top-1+hN}];
+  }
+  return wb.xlsx.writeBuffer();
+}
+
+async function runExport(btn){
+  const key=view, fn=EXPORTS[key]; if(!fn) return;
+  const label=btn.innerHTML; btn.disabled=true; btn.textContent=t("exporting");
+  try{
+    const spec=fn();
+    const buf=await buildXlsx(spec.sheets);
+    const data=new Uint8Array(buf);
+    const dl=await getDownloads();
+    if(dl){
+      try{ const r=await dl.save({filename:fnameSafe(spec.file),data}); if(r&&r.status!=="delivered") toast(t("exp_saved")); }
+      catch(e){ const c=e&&e.code; toast(c==="declined"?t("exp_declined"):c==="rate_limited"?t("exp_busy"):c==="host_unavailable"?t("exp_host"):t("exp_fail",{m:c||e.message||""})); }
+    }else{
+      const url=URL.createObjectURL(new Blob([data],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+      const a=document.createElement("a");a.href=url;a.download=fnameSafe(spec.file);document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
+      toast(t("exp_saved"));
+    }
+  }catch(e){ toast(e&&e.message==="lib"?t("exp_lib"):t("exp_fail",{m:e&&e.message||""})); console.error(e); }
+  finally{ btn.disabled=false; btn.innerHTML=label; }
+}
+function addExportButton(){
+  if(!EXPORTS[view]) return;
+  const b=document.createElement("button"); b.className="btn"; b.type="button"; b.innerHTML='<i class="fa-solid fa-file-excel" aria-hidden="true"></i> '+t("export"); b.onclick=()=>runExport(b);
+  const tb=document.querySelector("#main .toolbar");
+  const wrap=document.createElement("div"); wrap.style.minWidth="auto"; wrap.style.marginLeft="auto";
+  if(tb){ const l=document.createElement("label"); l.innerHTML="&nbsp;"; wrap.appendChild(l); wrap.appendChild(b); tb.appendChild(wrap); }
+  else { const d=document.querySelector("#main .desc"); const bar=document.createElement("div"); bar.className="toolbar"; wrap.appendChild(b); bar.appendChild(wrap); d.after(bar); }
+}
+const fileName=(en,ja,suffix)=>`${lang==="ja"?ja:en}_${suffix}.xlsx`;
+const H24=[...Array(24).keys()];
+
+const EXPORTS={};
+/* 排泄・水分チェック表 */
+EXPORTS.check=()=>{
+  const d=S.ckDate,recs=dayRecs(d);
+  let list=db.res; if(S.ckHide) list=list.filter(r=>recs.some(z=>z.rid===r.id));
+  const head=[["No",lang==="ja"?"名前":"Name",t("ck_item"),t("ck_total"),...H24]];
+  const body=[],merges=[];
+  list.forEach((r,i)=>{
+    const rr=recs.filter(z=>z.rid===r.id),has=rr.length>0,byH=h=>rr.filter(z=>+z.time.slice(0,2)===h);
+    const exRow=k=>H24.map(h=>{const e=byH(h).filter(z=>z.type==="excretion").map(z=>excF(z.v));if(!e.length)return "";const v=e.reduce((a,c)=>a+c[k],0),g=e.some(x=>x.g),ic=e.some(x=>x.i);return (g||ic)?{v:(g?"✓":"")+(ic?"△":"")+v,red:ic}:v;});
+    const ex=rr.filter(z=>z.type==="excretion").map(z=>excF(z.v));
+    const tf=rr.reduce((a,c)=>a+fluidMl(c),0);
+    const low=r.svc!=="svc_day"&&has&&tf<S.ckLow&&(d<TODAY||new Date().getHours()>=20);
+    const r0=1+body.length;
+    body.push([i+1,rname(r.id),t("ck_stool"),has?ex.reduce((a,c)=>a+c.s,0):"",...exRow("s")]);
+    body.push([null,null,t("ck_urine"),has?ex.reduce((a,c)=>a+c.u,0):"",...exRow("u")]);
+    body.push([null,null,t("ck_fluid"),has?{v:tf,red:low,bold:low}:"",...H24.map(h=>byH(h).reduce((a,c)=>a+fluidMl(c),0)||"")]);
+    merges.push([r0,0,r0+2,0],[r0,1,r0+2,1]);
+  });
+  return {file:fileName("toileting-fluid-check","排泄水分チェック表",d),sheets:[{name:t("nav_check"),title:t("ck_title"),left:t("ck_all",{n:list.length}),right:fmtDay(d),
+    cols:[5,18,7,8,...H24.map(()=>6)],head,body,merges,band:3,thick:[4+8,4+16],freezeX:4,center:true,note:`${t("ck_leg_g")}    ${t("ck_leg_i")}    ${t("ck_lowfluid",{n:S.ckLow})}`}]};
+};
+EXPORTS.hour=()=>{
+  const d=S.hDate,M=hourModel(d),{recs,by,items,list}=M;
+  const head=[["No",lang==="ja"?"名前":"Name",t("ck_item"),t("hr_day"),...H24]];
+  const body=[],merges=[];
+  const xc=c=>c===""?"":(c.red?{v:c.v,red:true,bold:true}:c.v);
+  list.forEach((r,i)=>{
+    const rr=recs.filter(z=>z.rid===r.id),r0=1+body.length;
+    items.forEach((k,j)=>body.push([j?null:i+1,j?null:rname(r.id),hrLabel(k),xc(hourTot(k,rr,r,d)),...H24.map(h=>xc(hourItem(k,by[r.id+"|"+h]||[])))]));
+    if(items.length>1) merges.push([r0,0,r0+items.length-1,0],[r0,1,r0+items.length-1,1]);
+  });
+  const fr=1+body.length;
+  body.push(["",{v:t("h_total"),bold:true},null,{v:recs.length,bold:true},...M.tot.map(v=>v||"")]);
+  body.push(["",{v:t("h_staff"),bold:true},null,"",...M.stf]);
+  merges.push([fr,1,fr,2],[fr+1,1,fr+1,2]);
+  return {file:fileName("24-hour-sheet","24時間シート",d),sheets:[{name:t("nav_hour"),title:t("hr_title"),left:t("ck_all",{n:list.length}),right:fmtDay(d),
+    cols:[5,16,18,9,...H24.map(()=>6.5)],head,body,merges,band:items.length,thick:[4+8,4+16],freezeX:4,center:true,
+    note:`${t("hr_leg")}    ${t("ck_leg_g")}    ${t("ck_leg_i")}    ${t("hr_red")}`}]};
+};
+/* 体重記録表 */
+EXPORTS.wt=()=>{
+  const ms=wtMonths();
+  const years=[];ms.forEach(m=>{const y=m.slice(0,4);if(years.length&&years[years.length-1].y===y)years[years.length-1].n++;else years.push({y,n:1,ym:m});});
+  const r0=["No",lang==="ja"?"氏名":"Name",lang==="ja"?"身長":"Height",t("bmi")];const merges=[[0,0,1,0],[0,1,1,1],[0,2,1,2],[0,3,1,3]];
+  let c=4;years.forEach(y=>{r0.push(yearHead(y.ym));for(let k=1;k<y.n;k++)r0.push(null);if(y.n>1)merges.push([0,c,0,c+y.n-1]);c+=y.n;});
+  r0.push(t("change"));merges.push([0,c,1,c]);
+  const r1=[null,null,null,null,...ms.map(monthHead),null];
+  const body=db.res.map((r,i)=>{
+    const vals=ms.map(m=>{const w=getWt(r.id,m),p=getWt(r.id,ymAdd(m,-1));if(w==null)return "";if(p!=null&&w-p<=-2)return {v:w,red:true,bold:true,fill:"FFFDECEA",fmt:"0.0"};if(p!=null&&w-p>=2)return {v:w,warn:true,fill:"FFFFF4E5",fmt:"0.0"};return {v:w,fmt:"0.0"};});
+    const lastW=[...ms].reverse().map(m=>getWt(r.id,m)).find(v=>v!=null),firstW=ms.map(m=>getWt(r.id,m)).find(v=>v!=null);
+    const bmi=lastW&&r.ht?+(lastW/((r.ht/100)**2)).toFixed(1):"";const ch=lastW!=null&&firstW!=null?+(lastW-firstW).toFixed(1):"";
+    return [i+1,rname(r.id),r.ht||"",bmi,...vals,ch===""?"":{v:ch,red:ch<=-2,warn:ch>=2,fmt:"+0.0;-0.0;0.0"}];});
+  body.push(["",{v:t("avg_row"),bold:true},"","",...ms.map(m=>{const v=db.res.map(r=>getWt(r.id,m)).filter(x=>x!=null);return v.length?{v:+(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1),bold:true,fmt:"0.0"}:"";}),""]);
+  return {file:fileName("weight-records","体重記録表",`${ms[0]}_${ms[ms.length-1]}`),sheets:[{name:t("wt_title"),title:t("wt_title"),left:t("ck_all",{n:db.res.length}),right:`${yearHead(ms[0])} ${monthHead(ms[0])} – ${yearHead(ms[ms.length-1])} ${monthHead(ms[ms.length-1])}`,
+    cols:[5,18,7,6,...ms.map(()=>7),8],head:[r0,r1],body,merges,band:1,freezeX:2,center:true,note:`${t("wt_loss")}  /  ${t("wt_gain")}  (kg)`}]};
+};
+/* 一日の記録 (3 sheets) */
+EXPORTS.daily=()=>{
+  const d=S.daily,recs=dayRecs(d),att=dayAtt(d);
+  const sRows=db.staff.map(s=>{const a=att.find(z=>z.sid===s.id);let st;if(!a)st=d===TODAY&&nowMin()<SHIFTS[s.shift][0]?"st_wait":"st_off";else if(!a.out)st="st_on";else st="st_done";
+    return [staffName(s.id),t(s.role),t("sh_"+s.shift),a?.in||"",a?.out||"",a?{v:+attHours(a,d).toFixed(1),fmt:"0.0"}:"",recs.filter(r=>r.by===s.id).length,t(st)];});
+  const rRows=db.res.map(r=>{const rr=recs.filter(z=>z.rid===r.id);if(!rr.length)return [r.room,rname(r.id),"","","","","","","","","",""];
+    const v=rr.filter(z=>z.type==="vital").pop(),m=rr.filter(z=>z.type==="meal"),fl=v?vitalFlags(v.v):[],meds=rr.filter(z=>z.type==="med");
+    return [r.room,rname(r.id),v?{v:v.v.temp,red:v.v.temp>=37.5}:"",v?`${v.v.bps}/${v.v.bpd}`:"",v?v.v.spo2:"",m.length,m.length?{v:Math.round(m.reduce((a,c)=>a+c.v.amt,0)/m.length)/100,fmt:"0%"}:"",
+      rr.reduce((a,c)=>a+fluidMl(c),0),rr.filter(z=>z.type==="excretion").length,rr.some(z=>z.type==="bath")?"✔":"",meds.length?(meds.every(z=>z.v.given)?"✔":"✗"):"",fl.length?{v:fl.join(", "),red:true}:"OK"];});
+  const tl=recs.slice().sort((a,b)=>a.time.localeCompare(b.time)).map(r=>[r.time,rname(r.rid),t(r.type),{v:plain(recSummary(r)),red:isAlert(r)},r.memo||"",staffName(r.by)]);
+  return {file:fileName("daily-report","介護日報",d),sheets:[
+    {name:t("staff_duty"),title:`${t("daily_title")} — ${t("staff_duty")}`,left:`${t("k_staff")}: ${att.length} / ${db.staff.length}`,right:fmtDay(d),cols:[20,14,14,9,9,8,8,10],
+      head:[[t("staff"),t("role"),t("shift"),t("clock_in"),t("clock_out"),t("hours"),t("records"),t("status")]],body:sRows,band:1,freezeX:1},
+    {name:t("res_summary"),title:`${t("daily_title")} — ${t("res_summary")}`,left:t("ck_all",{n:db.res.length}),right:fmtDay(d),cols:[7,18,8,10,7,7,9,9,9,6,6,26],
+      head:[[t("room"),t("resident"),lang==="ja"?"体温":"Temp","BP","SpO2",t("meals"),t("meal_avg"),t("fluid")+" ml",t("exc_n"),t("baths"),t("meds"),t("status")]],body:rRows,band:1,freezeX:2},
+    {name:t("timeline"),title:`${t("daily_title")} — ${t("timeline")}`,left:t("count_n",{n:tl.length}),right:fmtDay(d),cols:[8,18,12,44,40,18],
+      head:[[t("time"),t("resident"),t("type"),t("detail"),t("memo"),t("by")]],body:tl,band:1,freezeX:1}]};
+};
+/* 介護記録一覧 */
+EXPORTS.rec=()=>{
+  let list=recsRange(S.rFrom<HIST_START?HIST_START:S.rFrom,S.rTo);
+  if(S.rRes) list=list.filter(r=>r.rid===S.rRes); if(S.rType) list=list.filter(r=>r.type===S.rType); if(S.rStaff) list=list.filter(r=>r.by===S.rStaff);
+  list.sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const body=list.map(r=>{const res=db.res.find(x=>x.id===r.rid);return [r.date,r.time,rname(r.rid),res?.room||"",t(r.type),{v:plain(recSummary(r)),red:isAlert(r)},r.memo||"",staffName(r.by),r.share?"✔":""];});
+  return {file:fileName("care-records","介護記録一覧",`${S.rFrom}_${S.rTo}`),sheets:[{name:t("list_rec"),title:t("list_rec"),left:t("count_n",{n:body.length}),right:`${S.rFrom} – ${S.rTo}`,
+    cols:[11,7,18,7,11,44,40,18,6],head:[[t("date"),t("time"),t("resident"),t("room"),t("type"),t("detail"),t("memo"),t("by"),t("share_lbl")]],body,band:1,freezeX:3}]};
+};
+EXPORTS.res=()=>({file:fileName("residents","利用者一覧",TODAY),sheets:[{name:t("list_res"),title:t("list_res"),left:t("ck_all",{n:db.res.length}),right:fmtDay(TODAY),cols:[5,8,18,18,10,20,8,12,26],
+  head:[["No",t("room"),t("name_en"),t("name_ja"),t("level"),t("service"),lang==="ja"?"身長":"Height",t("dob"),t("family")]],
+  body:db.res.map((r,i)=>[i+1,r.room,r.en,r.ja,levelLabel(r.level),t(r.svc),r.ht||"",r.dob,r.fam]),band:1,freezeX:3}]});
+EXPORTS.staff=()=>{const rg=rangeOf("month",TODAY),recs=recsRange(rg.from,TODAY);
+  const body=db.staff.map((s,i)=>{let days=0,h=0;for(let d=rg.from;d<=TODAY;d=addD(d,1)){const a=dayAtt(d).find(z=>z.sid===s.id);if(a){days++;h+=attHours(a,d);}}
+    return [i+1,s.en,s.ja,t(s.role),t("sh_"+s.shift),s.phone,days,{v:+h.toFixed(1),fmt:"0.0"},recs.filter(r=>r.by===s.id).length];});
+  return {file:fileName("staff","職員一覧",TODAY.slice(0,7)),sheets:[{name:t("list_staff"),title:t("list_staff"),left:t("staff_n",{n:db.staff.length}),right:`${rg.from} – ${TODAY}`,cols:[5,18,14,14,14,15,10,10,10],
+    head:[["No",t("name_en"),t("name_ja"),t("role"),t("shift"),t("phone"),t("days_worked"),t("hours"),t("records")]],body,band:1,freezeX:3}]};};
+EXPORTS.plan=()=>({file:fileName("care-plans","ケアプラン一覧",TODAY),sheets:[{name:t("list_plan"),title:t("list_plan"),left:t("ck_all",{n:db.res.length}),right:fmtDay(TODAY),cols:[5,18,10,40,40,32,12,14],
+  head:[["No",t("resident"),t("level"),t("long_goal"),t("short_goal"),t("services"),t("review"),t("forecast")]],
+  body:db.res.map((r,i)=>{const p=db.plans[r.id]||{},f=forecast(r.id);return [i+1,rname(r.id),levelLabel(r.level),{v:p.long||"",wrap:true},{v:p.short||"",wrap:true},{v:p.svc||"",wrap:true},p.review||"",{v:t(f),red:f==="f_risk",warn:f==="f_watch"}];}),band:1,freezeX:2}]});
+EXPORTS.bill=()=>{const ym=S.billMonth;let sT=0,sC=0;
+  const body=db.res.map((r,i)=>{const b=bill(r.id,ym);sT+=b.total;sC+=b.copay;return [i+1,rname(r.id),levelLabel(r.level),b.days,b.units,{v:b.total,fmt:"¥#,##0"},{v:b.rate,fmt:"0%"},{v:Math.round(b.ins),fmt:"¥#,##0"},{v:Math.round(b.copay),fmt:"¥#,##0",bold:true}];});
+  body.push(["",{v:t("ck_total"),bold:true},"","","",{v:sT,fmt:"¥#,##0",bold:true},"",{v:Math.round(sT-sC),fmt:"¥#,##0",bold:true},{v:Math.round(sC),fmt:"¥#,##0",bold:true}]);
+  return {file:fileName("billing","介護報酬請求一覧",ym),sheets:[{name:t("list_bill"),title:`${t("list_bill")} (${ym})`,left:t("ck_all",{n:db.res.length}),right:ym,cols:[5,18,10,9,10,13,9,13,13],
+    head:[["No",t("resident"),t("level"),t("days"),t("units"),t("total"),t("copay_rate"),t("ins_paid"),t("copay")]],body,band:1,freezeX:2,note:t("bill_note")}]};};
+EXPORTS.msg=()=>({file:fileName("staff-messages","職員連絡一覧",TODAY),sheets:[{name:t("list_msg"),title:t("list_msg"),left:t("count_n",{n:db.msgs.length}),right:fmtDay(TODAY),cols:[17,18,8,80],
+  head:[[t("date"),t("by"),t("urgent"),t("memo")]],body:[...db.msgs].reverse().map(m=>[m.at,staffName(m.by),m.urgent?{v:"●",red:true}:"",{v:m.text,wrap:true}]),band:1,freezeX:1}]});
+/* Dashboard: summary + every chart's data */
+EXPORTS.dash=()=>{
+  const rg=rangeOf(S.period,S.anchor),cur=stats(rg);
+  const sum=[[t("k_rec"),cur.n],[t("k_alert"),{v:cur.alerts,red:cur.alerts>0}],[t("k_meal"),cur.meal==null?"":{v:cur.meal/100,fmt:"0.0%"}],[t("k_bath"),cur.baths],[t("k_hours"),{v:+cur.hours.toFixed(1),fmt:"0.0"}],[t("k_res"),`${cur.res} / ${db.res.length}`],
+    [t("resident"),S.dRes?rname(S.dRes):t("all")],[t("staff"),S.dStaff?staffName(S.dStaff):t("all")]];
+  const right=rangeLabel(S.period,rg);
+  const sheets=[{name:t("summary"),title:`${t("nav_dash")} — ${t("summary")}`,left:`${t("period")}: ${t("p_"+S.period)}`,right,cols:[28,20],head:[[t("metric"),t("value")]],body:sum,band:1,freezeX:1}];
+  Object.entries(charts).forEach(([id,c])=>{const {labels,datasets}=c.config.data;
+    sheets.push({name:CHART_TITLES[id]||id,title:CHART_TITLES[id]||id,left:`${t("period")}: ${t("p_"+S.period)}`,right,cols:[22,...datasets.map(()=>14)],
+      head:[["",...datasets.map(d=>plain(d.label))]],body:labels.map((l,i)=>[plain(l),...datasets.map(d=>d.data[i]==null?"":+(+d.data[i]).toFixed(1))]),band:1,freezeX:1});});
+  return {file:fileName("dashboard","ダッシュボード",`${S.period}_${rg.from}`),sheets};
+};
+
+/* =================== render =================== */
+function render(){
+  destroyCharts();
+  document.documentElement.lang=lang;
+  document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=t(el.dataset.i18n));
+  document.querySelectorAll(".lang button").forEach(b=>b.classList.toggle("on",b.dataset.lang===lang));
+  $("#nav").innerHTML=NAV.map(([g,ks])=>(g?`<div class="grp">${t(g)}</div>`:"")+ks.map(k=>`<button class="${k===view?"on":""}" data-v="${k}" ${k===view?'aria-current="page"':""}><span class="ic"><i class="fa-solid fa-${ICON[k]}" aria-hidden="true"></i></span>${t("nav_"+k)}</button>`).join("")).join("");
+  $("#today").textContent=fmtDay(TODAY);
+  $("#shift").innerHTML=`<i class="fa-solid fa-user-nurse" aria-hidden="true"></i><span>${t("on_duty_now")}</span><b>${t("ppl",{n:staffAtHour(TODAY,new Date().getHours())})}</b>`;
+  $("#nav").querySelectorAll("button").forEach(b=>b.onclick=()=>{view=b.dataset.v;try{history.replaceState(null,"","#"+view);}catch(e){}render();window.scrollTo(0,0);});
+  const scrollY=window.scrollY;
+  $("#main").innerHTML=V[view]();
+  if(V[view].after)V[view].after();
+  bindTableToggles();
+  addExportButton();
+  bindStamps();
+  if(view!=="iot")window.scrollTo(0,scrollY);
+}
+document.querySelectorAll(".lang button").forEach(b=>b.onclick=()=>{lang=b.dataset.lang;try{localStorage.setItem(KEY+"-lang",lang);}catch(e){}render();});
+try{lang=localStorage.getItem(KEY+"-lang")||"en";}catch(e){}
+const h0=location.hash.slice(1);if(VIEWS.some(v=>v[0]===h0))view=h0;
+window.addEventListener("hashchange",()=>{const k=location.hash.slice(1);if(VIEWS.some(v=>v[0]===k)&&k!==view){view=k;render();}});
+render();
+</script>
+</body>
+</html>
